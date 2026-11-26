@@ -318,6 +318,11 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 .demo { font-size: 12.5px; color: var(--muted); margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
 .dl a { color: var(--pri); }
 
+.cbadge { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+.cbadge.c-offline { background: #fef3c7; color: #92400e; } .cbadge:empty { display: none; }
+#cloudBar { position: fixed; top: 14px; left: 50%; transform: translate(-50%, -80px); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 12px; z-index: 99; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .3s; display: flex; gap: 10px; align-items: center; font-size: 14px; }
+#cloudBar.show { transform: translate(-50%, 0); } #cloudBar button { padding: 5px 12px; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -325,7 +330,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   @page { size: A4 landscape; margin: 8mm; }
   body { background: #fff; font-size: 12px; }
-  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView, #authModal { display: none !important; }
+  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView, #authModal, #cloudBar { display: none !important; }
   main { padding: 0; max-width: none; }
   section.tab { display: none !important; animation: none; }
   section#view { display: block !important; }
@@ -395,7 +400,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
     <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
     <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
   </div>
-  <div class="userbox"><a class="manual" href="manual.html" target="_blank" title="คู่มือผู้ใช้">📘 คู่มือ</a><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
+  <div class="userbox"><span id="cloudBadge" class="cbadge"></span><a class="manual" href="manual.html" target="_blank" title="คู่มือผู้ใช้">📘 คู่มือ</a><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
 </header>
 <nav>
   <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
@@ -1263,7 +1268,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 <script>window.EMBED={"fileName": "ข้อมูลรายวิชา_ver2.xlsx", "sheets": [{"name": "ชั้นปีที่1", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 1 ", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "มศ 041017", "ภาษาไทยเพื่อการสื่อสารในศตวรรษที่ 21", "3(3-0-6)", "วิชาภาษา", "อ.ดร.ภาสกร ชาญจิราวดี", null, null], [2, "สศ 021011", "คนกีฬาสู่วิถีพลเมืองสร้างสรรค์", "3(3-0-6)", "วิชาสังคมศาสตร์และมนุษยศาสตร์", "ผศ.ดร.ปรียาณัฐ บัวทองจันทร์", null, null], [3, "กศ 051014", "จิตวิทยาสำหรับครู", "3(2-2-5)", "วิชาชีพครู", "อ.วรรณา นิ่มวุ่น", null, null], [4, "กศ 032010  ", "เทคโนโลยีดิจิทัลเพื่อพัฒนานวัตกรรมฯ              ", "3(2-2-5)", "นวัตกรรมและเทคโนโลยี", "อ.ดร.กานตินุช  สถิรมนัส", null, null], [5, "กศ 071001  ", "ปฏิบัติการวิชาชีพระหว่างเรียน 1", "1(90) ", "วิชาชีพครู", "อ.สิบเอกสุรชัย แซ่ด่าน", null, "* ผู้บริหาร"], [null, null, null, "เรียน 4 ชม.เรียนรวมทั้งชั้นปี", null, "อ.วรรณา นิ่มวุ่น", null, null], [6, "สข 001024", "กายวิภาคศาสตร์และสรีรวิทยา  ", "3(3-0-6)", "วิชาบังคับ", "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [7, "พล 051383", "ทักษะและการจัดการเรียนรู้ กีฬากระบี่กระบอง", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.สุขสวัสดิ์  แย้มศรี", null, null], [8, "พล 031519", "ทักษะและการจัดการเรียนรู้ กีฬาว่ายน้ำ", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.นฤเบศภ์  ขวัญเพชร", null, null], ["รวม 8 รายวิชา 27 คาบ", null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่2", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 2", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "วท 091010", "คณิตศาสตร์ในชีวิตประจำวัน   ", "3(2-2-5)", "คณิตศาสตร์", "อ.เฉลิมวิชญ์  กุลศิริ", null, null], [2, "พล 072166", "ลูกเสือและยุวกาชาด ", "2(1-2-3)", "วิชาบังคับ", "อ.สมพงค์  แก้วเวหา", null, null], [3, "กศ 022039  ", "การพัฒนาหลักสูตร                                       ", "3(2-2-5)", "วิชาชีพครู", "อ.สุมน  เกลาฉีด", null, null], [4, "พล 012254", "ภาษาอังกฤษสำหรับวิชาชีพพลศึกษา  ", "2(1-2-3)", "วิชาภาษา", "ผศ.ปรัศนี ช่วยการ ซอลีฮี", null, "*"], [5, "กศ 072002", "ปฏิบัติการวิชาชีพระหว่างเรียน 2", "1(90)", "วิชาชีพครู", "ผศ.ธรณัส  ปัญญาไข", null, "*"], [null, null, null, "เรียน 4 ชม.เรียนรวมทั้งชั้นปี", null, "อ.ดร.กานตินุช สถิรมนัส", null, null], [6, "พล 051381", "ทักษะและการจัดการเรียนรู้กีฬามวยไทย", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.สุธน  เพ็ชรนิล", null, null], [7, "พล 061126", "ทักษะและการจัดการเรียนรู้ การช่วยชีวิตทางน้ำ", "2(1-2-3)", "ทักษะและการสอนกีฬา", "ผศ.กู้เกียรติ  บุญมี", null, "*"], [8, "วท 061006", "รักษ์สิ่งแวดล้อม  ", "3(3-0-6)", "วิทยาศาสตร์", "อ.ดร.รุ่งโรจน์ ไกรสิทธิพาณิชย์", null, null], [9, "พล 042262", "ทักษะกีฬาฟุตซอล", "1(0-2-1)", "ทักษะและการสอนกีฬาขั้นสูง", "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 042270", "ทักษะกีฬาแฮนด์บอล", "เลือกเรียน 1 รายวิชา ", null, "อ.ดร.ภานุ  ศรีวิสุทธิ์", null, "*"], [null, "พล 032577", "ทักษะกีฬาเทเบิลเทนนิส", "1 รายวิชาไม่เกิน 20 คน", null, "อ.ดร.สุนันทา  สุพรรณ", null, null], [null, "พล 032576", "ทักษะกีฬาเทนนิส", null, null, "ผศ.กู้เกียรติ  บุญมี", null, null], [null, "พล 032613", "ทักษะกีฬาปีนผา", null, null, "อ.สุธน  เพ็ชรนิล", null, null], [null, "พล 044272", "ทักษะกีฬาเทคบอล", null, null, "อ.สมพงค์  แก้วเวหา", null, null], [null, "พล 032583", "ทักษะกีฬามวยปล้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร", null, null], [null, "พล 042267", "ทักษะกีฬาวอลเลย์บอลชายหาด", null, null, "อ.นฤณัฐ  ไชยเจริญ", null, null], ["รวม 9 รายวิชา 29คาบ", null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่3", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 3", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "สข 012091", "เพศศึกษาและชีวิตครอบครัว ", "3(3-0-6)", "วิชาบังคับ", "อ.ดร.ภาสกร  ชาญจิราวดี", null, null], [2, "กศ 043018", "การวัดและประเมินผลการศึกษาและการเรียนรู้", "3(2-2-5)", "วิชาบังคับ", "ผศ.ดร.ยานี  จรคงสี", null, "* ผู้บริหาร"], [3, "พล 013159", "นวัตกรรมและเทคโนโลยีสารสนเทศ ทางพลศึกษา", "2(1-2-3)", "นวัตกรรมและเทคโนโลยี", "ผศ.ธรณัส ปัญญาไข", null, null], [null, null, null, null, null, "อ.ดร.สุนันทา  สุพรรณ", null, null], [4, "กศ 021036", "ปฏิบัติการสอนในสถานศึกษา 3", "2(90)", "วิชาชีพครู", "อ.สุธน  เพ็ชรนิล", null, null], [null, null, null, "เรียน 4 ชม. เรียนรวมทั้งชั้นปี", null, "อ.ดร.ภาสกร  ชาญจิราวดี", null, null], [5, "พล 032407", "ทักษะกีฬายิมนาสติก", "1(0-2-1)", "ทักษะและการสอนกีฬา", "อ.สุขสวัสดิ์  แย้มศรี", null, null], [6, "พล 072133", "กิจกรรมเข้าจังหวะ", "1(0-2-1)", "ทักษะและการสอนกีฬา", "อ.ดร.สุนันทา  สุพรรณ", null, null], [7, "สข 013081", "โปรแกรมสุขภาพในโรงเรียน", "3(2-2-5)", "วิชาบังคับ", "อ.นฤณัฐ  ไชยเจริญ", null, null], [8, "พล 033451", "การตัดสินกีฬากรีฑา", "2(1-2-3)", "การตัดสินกีฬา", "อ.สุรชัย  แซ่ด่าน", null, null], [null, "พล 043193", "การตัดสินกีฬาวอลเลย์บอล", "เลือกเรียน 1 รายวิชา", null, "ผศ.กู้เกียรติ บุญมี", null, null], [null, "พล 043190", "การตัดสินกีฬาฟุตซอล", "1 รายวิชาไม่เกิน 20 คน", null, "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 043189", "การตัดสินกีฬาบาสเกตบอล", null, null, "ผศ.นฤมล  หวานดี", null, "*"], [null, "พล 033471", "การตัดสินกีฬาว่ายน้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร ", null, null], [null, "พล 033462", "การตัดสินกีฬามวยไทย", null, null, "อ. สุธน  เพ็ชรนิล", null, null], [null, "พล 043187", "การตัดสินกีฬาเซปักตะกร้อ", null, null, "อ.สมพงค์   แก้วเวหา", null, null], [9, "พล 034475", "กลวิธีการฝึกกีฬากรีฑา", "2(1-2-3)", "กลวิธีการฝึกกีฬา", "อ.สุรชัย  แซ่ด่าน", null, null], [null, "พล 044204", "กลวิธีการฝึกกีฬาวอลเลย์บอล", "เลือกเรียน 1 รายวิชา", null, "อ.นฤณัฐ  ไชยเจริญ", null, null], [null, "พล 044201", "กลวิธีการฝึกกีฬาฟุตซอล", "1 รายวิชาไม่เกิน 20 คน", null, "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 044200", "กลวิธีการฝึกกีฬาบาสเกตบอล", null, null, "ผศ.นฤมล  หวานดี", null, null], [null, "พล 034495", "กลวิธีการฝึกกีฬาว่ายน้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร ", null, null], [null, "พล 044198", "กลวิธีการฝึกกีฬาเซปักตะกร้อ", null, null, "อ.สมพงค์   แก้วเวหา", null, null], ["รวม 9 รายวิชา 28 คาบ", null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่4", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 4 ", null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน"], [1, "กศ 021037", "ปฏิบัติการสอนในสถานศึกษา 4", "6(360)", "วิชาชีพครู", "อ.สุมน  เกลาฉีด"], [null, null, null, null, null, "อ.สุขสวัสดิ์  แย้มศรี "], ["รวม 1 รายวิชา", null, null, null, null, null], [null, null, null, null, null, null]]}]};
 window.SAMPLE=[{"name":"ชั้นปีที่1","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 1 ",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"มศ 041017","ภาษาไทยเพื่อการสื่อสารในศตวรรษที่ 21","3(3-0-6)","วิชาภาษา","อ.ดร.ภาสกร ชาญจิราวดี",null,null],[2,"สศ 021011","คนกีฬาสู่วิถีพลเมืองสร้างสรรค์","3(3-0-6)","วิชาสังคมศาสตร์และมนุษยศาสตร์","ผศ.ดร.ปรียาณัฐ บัวทองจันทร์",null,null],[3,"กศ 051014","จิตวิทยาสำหรับครู","3(2-2-5)","วิชาชีพครู","อ.วรรณา นิ่มวุ่น",null,null],[4,"กศ 032010  ","เทคโนโลยีดิจิทัลเพื่อพัฒนานวัตกรรมฯ              ","3(2-2-5)","นวัตกรรมและเทคโนโลยี","อ.ดร.กานตินุช  สถิรมนัส",null,null],[5,"กศ 071001  ","ปฏิบัติการวิชาชีพระหว่างเรียน 1","1(90) ","วิชาชีพครู","อ.สิบเอกสุรชัย แซ่ด่าน",null,"* ผู้บริหาร"],[null,null,null,"เรียน 4 ชม.เรียนรวมทั้งชั้นปี",null,"อ.วรรณา นิ่มวุ่น",null,null],[6,"สข 001024","กายวิภาคศาสตร์และสรีรวิทยา  ","3(3-0-6)","วิชาบังคับ","รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[7,"พล 051383","ทักษะและการจัดการเรียนรู้ กีฬากระบี่กระบอง","2(1-2-3)","ทักษะและการสอนกีฬา","อ.สุขสวัสดิ์  แย้มศรี",null,null],[8,"พล 031519","ทักษะและการจัดการเรียนรู้ กีฬาว่ายน้ำ","2(1-2-3)","ทักษะและการสอนกีฬา","อ.นฤเบศภ์  ขวัญเพชร",null,null],["รวม 8 รายวิชา 27 คาบ",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่2","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 2",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"วท 091010","คณิตศาสตร์ในชีวิตประจำวัน   ","3(2-2-5)","คณิตศาสตร์","อ.เฉลิมวิชญ์  กุลศิริ",null,null],[2,"พล 072166","ลูกเสือและยุวกาชาด ","2(1-2-3)","วิชาบังคับ","อ.สมพงค์  แก้วเวหา",null,null],[3,"กศ 022039  ","การพัฒนาหลักสูตร                                       ","3(2-2-5)","วิชาชีพครู","อ.สุมน  เกลาฉีด",null,null],[4,"พล 012254","ภาษาอังกฤษสำหรับวิชาชีพพลศึกษา  ","2(1-2-3)","วิชาภาษา","ผศ.ปรัศนี ช่วยการ ซอลีฮี",null,"*"],[5,"กศ 072002","ปฏิบัติการวิชาชีพระหว่างเรียน 2","1(90)","วิชาชีพครู","ผศ.ธรณัส  ปัญญาไข",null,"*"],[null,null,null,"เรียน 4 ชม.เรียนรวมทั้งชั้นปี",null,"อ.ดร.กานตินุช สถิรมนัส",null,null],[6,"พล 051381","ทักษะและการจัดการเรียนรู้กีฬามวยไทย","2(1-2-3)","ทักษะและการสอนกีฬา","อ.สุธน  เพ็ชรนิล",null,null],[7,"พล 061126","ทักษะและการจัดการเรียนรู้ การช่วยชีวิตทางน้ำ","2(1-2-3)","ทักษะและการสอนกีฬา","ผศ.กู้เกียรติ  บุญมี",null,"*"],[8,"วท 061006","รักษ์สิ่งแวดล้อม  ","3(3-0-6)","วิทยาศาสตร์","อ.ดร.รุ่งโรจน์ ไกรสิทธิพาณิชย์",null,null],[9,"พล 042262","ทักษะกีฬาฟุตซอล","1(0-2-1)","ทักษะและการสอนกีฬาขั้นสูง","รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 042270","ทักษะกีฬาแฮนด์บอล","เลือกเรียน 1 รายวิชา ",null,"อ.ดร.ภานุ  ศรีวิสุทธิ์",null,"*"],[null,"พล 032577","ทักษะกีฬาเทเบิลเทนนิส","1 รายวิชาไม่เกิน 20 คน",null,"อ.ดร.สุนันทา  สุพรรณ",null,null],[null,"พล 032576","ทักษะกีฬาเทนนิส",null,null,"ผศ.กู้เกียรติ  บุญมี",null,null],[null,"พล 032613","ทักษะกีฬาปีนผา",null,null,"อ.สุธน  เพ็ชรนิล",null,null],[null,"พล 044272","ทักษะกีฬาเทคบอล",null,null,"อ.สมพงค์  แก้วเวหา",null,null],[null,"พล 032583","ทักษะกีฬามวยปล้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร",null,null],[null,"พล 042267","ทักษะกีฬาวอลเลย์บอลชายหาด",null,null,"อ.นฤณัฐ  ไชยเจริญ",null,null],["รวม 9 รายวิชา 29คาบ",null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่3","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 3",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"สข 012091","เพศศึกษาและชีวิตครอบครัว ","3(3-0-6)","วิชาบังคับ","อ.ดร.ภาสกร  ชาญจิราวดี",null,null],[2,"กศ 043018","การวัดและประเมินผลการศึกษาและการเรียนรู้","3(2-2-5)","วิชาบังคับ","ผศ.ดร.ยานี  จรคงสี",null,"* ผู้บริหาร"],[3,"พล 013159","นวัตกรรมและเทคโนโลยีสารสนเทศ ทางพลศึกษา","2(1-2-3)","นวัตกรรมและเทคโนโลยี","ผศ.ธรณัส ปัญญาไข",null,null],[null,null,null,null,null,"อ.ดร.สุนันทา  สุพรรณ",null,null],[4,"กศ 021036","ปฏิบัติการสอนในสถานศึกษา 3","2(90)","วิชาชีพครู","อ.สุธน  เพ็ชรนิล",null,null],[null,null,null,"เรียน 4 ชม. เรียนรวมทั้งชั้นปี",null,"อ.ดร.ภาสกร  ชาญจิราวดี",null,null],[5,"พล 032407","ทักษะกีฬายิมนาสติก","1(0-2-1)","ทักษะและการสอนกีฬา","อ.สุขสวัสดิ์  แย้มศรี",null,null],[6,"พล 072133","กิจกรรมเข้าจังหวะ","1(0-2-1)","ทักษะและการสอนกีฬา","อ.ดร.สุนันทา  สุพรรณ",null,null],[7,"สข 013081","โปรแกรมสุขภาพในโรงเรียน","3(2-2-5)","วิชาบังคับ","อ.นฤณัฐ  ไชยเจริญ",null,null],[8,"พล 033451","การตัดสินกีฬากรีฑา","2(1-2-3)","การตัดสินกีฬา","อ.สุรชัย  แซ่ด่าน",null,null],[null,"พล 043193","การตัดสินกีฬาวอลเลย์บอล","เลือกเรียน 1 รายวิชา",null,"ผศ.กู้เกียรติ บุญมี",null,null],[null,"พล 043190","การตัดสินกีฬาฟุตซอล","1 รายวิชาไม่เกิน 20 คน",null,"รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 043189","การตัดสินกีฬาบาสเกตบอล",null,null,"ผศ.นฤมล  หวานดี",null,"*"],[null,"พล 033471","การตัดสินกีฬาว่ายน้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร ",null,null],[null,"พล 033462","การตัดสินกีฬามวยไทย",null,null,"อ. สุธน  เพ็ชรนิล",null,null],[null,"พล 043187","การตัดสินกีฬาเซปักตะกร้อ",null,null,"อ.สมพงค์   แก้วเวหา",null,null],[9,"พล 034475","กลวิธีการฝึกกีฬากรีฑา","2(1-2-3)","กลวิธีการฝึกกีฬา","อ.สุรชัย  แซ่ด่าน",null,null],[null,"พล 044204","กลวิธีการฝึกกีฬาวอลเลย์บอล","เลือกเรียน 1 รายวิชา",null,"อ.นฤณัฐ  ไชยเจริญ",null,null],[null,"พล 044201","กลวิธีการฝึกกีฬาฟุตซอล","1 รายวิชาไม่เกิน 20 คน",null,"รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 044200","กลวิธีการฝึกกีฬาบาสเกตบอล",null,null,"ผศ.นฤมล  หวานดี",null,null],[null,"พล 034495","กลวิธีการฝึกกีฬาว่ายน้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร ",null,null],[null,"พล 044198","กลวิธีการฝึกกีฬาเซปักตะกร้อ",null,null,"อ.สมพงค์   แก้วเวหา",null,null],["รวม 9 รายวิชา 28 คาบ",null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่4","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 4 ",null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน"],[1,"กศ 021037","ปฏิบัติการสอนในสถานศึกษา 4","6(360)","วิชาชีพครู","อ.สุมน  เกลาฉีด"],[null,null,null,null,null,"อ.สุขสวัสดิ์  แย้มศรี "],["รวม 1 รายวิชา",null,null,null,null,null],[null,null,null,null,null,null]]}];
 /* app.js — หน้าจอระบบจัดตาราง */
-(function () {
+window.__startApp = function () {
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const S = { cfg: null, sheets: null, draft: null, data: null, check: null, runs: [], current: null, baseline: null, cancel: false };
@@ -1835,6 +1840,7 @@ window.SAMPLE=[{"name":"ชั้นปีที่1","rows":[["คณะศึ�
   S.fingerprint = () => S.sha256(JSON.stringify(S.sheets) + "|" + (S.scale || 1) + "|" + JSON.stringify(S.cfg));
   S.persist = () => {
     if (!S.current || !S.data) return;
+    if (!S.isAdmin || !S.isAdmin()) return;   // เฉพาะผู้ดูแลเท่านั้นที่บันทึกตารางกลางได้
     const sv = { fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH") };
     // เก็บข้อมูลที่นำเข้าไว้ด้วย เพื่อให้รีเฟรชหน้าแล้วกู้ตารางกลับมาได้โดยไม่ต้องนำเข้าไฟล์ใหม่
     const full = Object.assign({}, sv, { sheets: S.sheets, scale: S.scale || 1, cfg: S.cfg, data: S.data, fileName: $("#fileName").textContent });
@@ -2124,6 +2130,7 @@ window.SAMPLE=[{"name":"ชั้นปีที่1","rows":[["คณะศึ�
     $("#xlsxBtn").textContent = r === "admin" ? "ส่งออก Excel (ทุกตาราง)" : "ส่งออก Excel";
     $("#viewNavLabel").textContent = r === "teacher" ? "ตารางสอนของฉัน" : r === "student" ? "ตารางเรียนของฉัน" : "ดูตาราง/ส่งออก";
     if (r === "admin") {
+      $("#vType").value = "group"; $("#vEntity").innerHTML = "";   // เริ่มที่มุมมองตารางกลุ่มเสมอ
       showTab(S.current ? "view" : "import"); renderUsers();
       if (S.reqs.length) setTimeout(() => toast(`🔔 มีคำขอรอดำเนินการ ${S.reqs.length} รายการ (เมนูจัดการผู้ใช้)`, "ok"), 1200);
       return;
@@ -2457,6 +2464,142 @@ window.SAMPLE=[{"name":"ชั้นปีที่1","rows":[["คณะศึ�
       if (!$("#saveData").disabled) $("#saveData").click();
     }
   }
+};
+
+window.CLOUD_CFG = { url: "", key: "" };   // ใส่ Supabase Project URL และ anon key
+
+/* cloud.js — ซิงก์ข้อมูลทุกเครื่องผ่าน Supabase (REST)
+ * หลักการ: แอปยังอ่าน/เขียน localStorage เหมือนเดิม
+ *  1) ก่อนเริ่มแอป ดึงข้อมูลกลางจากเซิร์ฟเวอร์มาใส่ localStorage
+ *  2) เมื่อแอปเขียน localStorage (บัญชี ตาราง คำขอ ตั้งค่า) ส่งขึ้นเซิร์ฟเวอร์ตามทันที
+ *  3) ตรวจทุก 20 วินาทีและเมื่อกลับมาที่หน้า ถ้าเครื่องอื่นแก้ข้อมูล แจ้งให้โหลดใหม่
+ * ถ้าไม่ได้ตั้งค่าหรือเซิร์ฟเวอร์ล่ม ระบบทำงานแบบเก็บในเครื่องต่อได้
+ */
+(function () {
+  const CFG = window.CLOUD_CFG || {};
+  const KEYS = ["tt_users", "tt_sched", "tt_requests", "tt_cfg", "tt_demo_v1"];
+  const on = !!(CFG.url && CFG.key);
+  const C = window.CLOUD = { on, status: on ? "connecting" : "local", lastSync: null, pending: {}, applying: false };
+  const H = on ? { apikey: CFG.key, Authorization: "Bearer " + CFG.key } : {};
+  const base = on ? CFG.url.replace(/\/$/, "") + "/rest/v1/app_state" : "";
+  const rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem;
+  const ls = window.localStorage;
+
+  function badge() {
+    const el = document.getElementById("cloudBadge");
+    if (!el) return;
+    const t = C.lastSync ? C.lastSync.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
+    const map = {
+      local: ["💾 เก็บในเครื่องนี้", "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ ข้อมูลอยู่ในเบราว์เซอร์เครื่องนี้"],
+      connecting: ["⏳ กำลังเชื่อมต่อ…", ""],
+      online: ["☁️ ออนไลน์" + (t ? " · " + t : ""), "ข้อมูลตรงกันทุกเครื่อง (Supabase)"],
+      saving: ["☁️ กำลังบันทึก…", ""],
+      offline: ["⚠️ ออฟไลน์", "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ข้อมูลเก็บในเครื่องไว้ก่อน จะส่งขึ้นเมื่อกลับมาออนไลน์"]
+    };
+    const [txt, tip] = map[C.status] || map.local;
+    el.textContent = txt; el.title = tip; el.className = "cbadge c-" + C.status;
+  }
+  C.badge = badge;
+
+  async function pullAll() {
+    const url = base + "?select=key,value&key=in.(" + KEYS.join(",") + ")";
+    const r = await fetch(url, { headers: H, cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }
+  async function pushOne(key, value) {
+    const r = await fetch(base, {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" }, H),
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+  }
+  let timer = null;
+  function queue(key, value) {
+    C.pending[key] = value;
+    clearTimeout(timer);
+    timer = setTimeout(flush, 400);
+  }
+  async function flush() {
+    const items = Object.entries(C.pending);
+    if (!items.length) return;
+    C.status = "saving"; badge();
+    try {
+      for (const [k, v] of items) {
+        await pushOne(k, v);
+        if (C.pending[k] === v) delete C.pending[k];
+      }
+      C.status = "online"; C.lastSync = new Date();
+    } catch (e) { C.status = "offline"; }
+    badge();
+  }
+  C.flush = flush;
+
+  // เขียน localStorage เมื่อไหร่ ส่งขึ้นเซิร์ฟเวอร์ด้วย (เฉพาะคีย์ของระบบ)
+  if (on) {
+    Storage.prototype.setItem = function (k, v) {
+      rawSet.call(this, k, v);
+      if (this === ls && KEYS.includes(k) && !C.applying) queue(k, String(v));
+    };
+    Storage.prototype.removeItem = function (k) {
+      rawRemove.call(this, k);
+      if (this === ls && KEYS.includes(k) && !C.applying) queue(k, null);
+    };
+  }
+
+  function apply(rows) {
+    C.applying = true;
+    for (const r of rows) {
+      if (r.value === null || r.value === undefined) rawRemove.call(ls, r.key);
+      else rawSet.call(ls, r.key, typeof r.value === "string" ? r.value : JSON.stringify(r.value));
+    }
+    C.applying = false;
+  }
+
+  // แจ้งเมื่อเครื่องอื่นแก้ข้อมูล
+  function notifyRemote() {
+    let bar = document.getElementById("cloudBar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "cloudBar";
+      bar.innerHTML = '🔄 มีข้อมูลใหม่จากเครื่องอื่น <button type="button">โหลดข้อมูลล่าสุด</button>';
+      bar.querySelector("button").onclick = () => location.reload();
+      document.body.appendChild(bar);
+    }
+    bar.classList.add("show");
+  }
+  async function check() {
+    if (!on || document.hidden) return;
+    try {
+      if (Object.keys(C.pending).length) await flush();
+      const rows = await pullAll();
+      const changed = rows.some(r => !(r.key in C.pending) && r.key !== "tt_demo_v1" &&
+        (r.value === null ? ls.getItem(r.key) !== null : ls.getItem(r.key) !== (typeof r.value === "string" ? r.value : JSON.stringify(r.value))));
+      C.status = "online"; C.lastSync = new Date(); badge();
+      if (changed) notifyRemote();
+    } catch (e) { C.status = "offline"; badge(); }
+  }
+
+  function start() {
+    if (typeof window.__startApp === "function") window.__startApp();
+    badge();
+  }
+
+  if (!on) { start(); return; }
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000));
+  Promise.race([pullAll(), timeout]).then(rows => {
+    apply(rows);
+    C.status = "online"; C.lastSync = new Date();
+    C.cloudKeys = new Set(rows.map(r => r.key));
+  }).catch(() => { C.status = "offline"; }).finally(() => {
+    start();
+    // เครื่องแรก: ส่งข้อมูลในเครื่องขึ้นไปตั้งต้นข้อมูลกลาง
+    if (C.status === "online") KEYS.forEach(k => { if (!C.cloudKeys.has(k) && ls.getItem(k) !== null) queue(k, ls.getItem(k)); });
+    setInterval(check, 20000);
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", check);
+  });
 })();
 </script>
 </body>

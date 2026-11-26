@@ -191,6 +191,7 @@
   S.fingerprint = () => S.sha256(JSON.stringify(S.sheets) + "|" + (S.scale || 1) + "|" + JSON.stringify(S.cfg));
   S.persist = () => {
     if (!S.current || !S.data) return;
+    if (!S.isAdmin || !S.isAdmin()) return;   // เฉพาะผู้ดูแลเท่านั้นที่บันทึกตารางกลางได้
     const sv = { fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH") };
     // เก็บข้อมูลที่นำเข้าไว้ด้วย เพื่อให้รีเฟรชหน้าแล้วกู้ตารางกลับมาได้โดยไม่ต้องนำเข้าไฟล์ใหม่
     const full = Object.assign({}, sv, { sheets: S.sheets, scale: S.scale || 1, cfg: S.cfg, data: S.data, fileName: $("#fileName").textContent });

@@ -91,6 +91,7 @@
     $("#xlsxBtn").textContent = r === "admin" ? "ส่งออก Excel (ทุกตาราง)" : "ส่งออก Excel";
     $("#viewNavLabel").textContent = r === "teacher" ? "ตารางสอนของฉัน" : r === "student" ? "ตารางเรียนของฉัน" : "ดูตาราง/ส่งออก";
     if (r === "admin") {
+      $("#vType").value = "group"; $("#vEntity").innerHTML = "";   // เริ่มที่มุมมองตารางกลุ่มเสมอ
       showTab(S.current ? "view" : "import"); renderUsers();
       if (S.reqs.length) setTimeout(() => toast(`🔔 มีคำขอรอดำเนินการ ${S.reqs.length} รายการ (เมนูจัดการผู้ใช้)`, "ok"), 1200);
       return;

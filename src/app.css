@@ -308,6 +308,11 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 .demo { font-size: 12.5px; color: var(--muted); margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
 .dl a { color: var(--pri); }
 
+.cbadge { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+.cbadge.c-offline { background: #fef3c7; color: #92400e; } .cbadge:empty { display: none; }
+#cloudBar { position: fixed; top: 14px; left: 50%; transform: translate(-50%, -80px); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 12px; z-index: 99; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .3s; display: flex; gap: 10px; align-items: center; font-size: 14px; }
+#cloudBar.show { transform: translate(-50%, 0); } #cloudBar button { padding: 5px 12px; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -315,7 +320,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   @page { size: A4 landscape; margin: 8mm; }
   body { background: #fff; font-size: 12px; }
-  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView, #authModal { display: none !important; }
+  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView, #authModal, #cloudBar { display: none !important; }
   main { padding: 0; max-width: none; }
   section.tab { display: none !important; animation: none; }
   section#view { display: block !important; }
