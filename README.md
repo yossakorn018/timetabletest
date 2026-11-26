@@ -23,6 +23,12 @@
 
 - `src/engine.js` แปลงไฟล์ ตรวจข้อมูล จัดตาราง (Greedy + Heuristic + seed + ซ่อมแบบ plan-act-check) และตรวจผล
 - `src/app.js`, `src/body.html`, `src/app.css` หน้าจอ
+- `src/auth.js` ล็อกอิน 3 บทบาท (ผู้ดูแล/อาจารย์/นักศึกษา) จัดการผู้ใช้ รหัสผ่าน SHA-256 + salt
 - `src/features.js` แอนิเมชัน AI (Plan-Act-Repair-Check), ลากย้ายวิชาพร้อมตรวจเงื่อนไข, หลักฐานเชิงตัวเลข (ablation 4 วิธี + stress test), QR Code และหน้ามือถือ
 - `src/build.py` รวมเป็น `index.html` (`python build.py data.xlsx` จะสร้าง `index_with_data.html` ด้วย)
 - `src/test.js` ทดสอบ engine ด้วย Node.js
+
+## บัญชีเริ่มต้น
+
+- ผู้ดูแลระบบ: `admin` / `admin1234`
+- ผู้ดูแลสร้างบัญชีอาจารย์ (`t01`...) และนักศึกษา (`g1-1`...) ได้ในเมนู "จัดการผู้ใช้"

@@ -7,6 +7,7 @@
   // ---------- แท็บ ----------
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
   function showTab(id) {
+    if (S.user && S.user.role !== "admin" && id !== "view") id = "view";
     document.querySelectorAll("nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
     document.querySelectorAll("section.tab").forEach(s => s.hidden = s.id !== id);
     if (id === "view") renderView();
@@ -87,6 +88,7 @@
       Object.entries(chk.groupHours).map(([g, h]) => `<tr><td>${g}</td><td>${h}</td><td>${chk.freeSlots}</td></tr>`).join("");
     renderSections();
     $("#saveData").disabled = !chk.ok;
+    if (S.renderUsers && S.isAdmin()) S.renderUsers();
   }
   function renderIssues(chk, sel) {
     const icon = { error: "⛔", warn: "⚠️", info: "ℹ️" };
@@ -193,8 +195,9 @@
   $("#vSearch").oninput = () => { fillEntities(); renderView(); };
   function entities() {
     const t = $("#vType").value, d = S.data;
-    if (t === "group") return d.groups.filter(g => S.check.groupHours[g.id]).map(g => [g.id, "กลุ่ม " + g.id + " (ห้อง " + g.home + ")"]);
-    if (t === "teacher") return d.teachers.map(x => [x.id, x.name + (x.role === "Manager" ? " (ผู้บริหาร)" : "")]);
+    if (t === "group") return S.roleFilter(t, d.groups.filter(g => S.check.groupHours[g.id]).map(g => [g.id, "กลุ่ม " + g.id + " (ห้อง " + g.home + ")"]));
+    if (t === "teacher") return S.roleFilter(t, d.teachers.map(x => [x.id, x.name + (x.role === "Manager" ? " (ผู้บริหาร)" : "")]));
+    if (S.user && S.user.role !== "admin") return [];
     const used = new Set(S.current ? S.current.rows.flatMap(r => r.rooms) : []);
     const all = [...S.cfg.theoryRooms, ...S.cfg.computerRooms.map(r => r.id), ...S.cfg.facilities.map(f => f.id)];
     return all.map(r => { const f = S.cfg.facilities.find(x => x.id === r); return [r, (f ? f.name : "ห้อง " + r) + (used.has(r) ? "" : " (ว่าง)")]; });
@@ -249,14 +252,16 @@
     return h + "</table>";
   }
   function renderView() {
-    if (!S.current) { $("#gridBox").innerHTML = "<p class='muted'>ยังไม่มีผลการจัดตาราง</p>"; return; }
+    if (!S.current) { $("#gridBox").innerHTML = `<p class='muted'>${S.isAdmin() ? "ยังไม่มีผลการจัดตาราง" : "ยังไม่มีตาราง รอผู้ดูแลระบบจัดตารางก่อน"}</p>`; return; }
+    if (S.user && S.user.role !== "admin") { $("#vType").value = S.user.role === "teacher" ? "teacher" : "group"; fillEntities(); }
     if (!$("#vEntity").options.length) fillEntities();
     const type = $("#vType").value, id = $("#vEntity").value;
     if (!id) return;
     const opt = $("#vEntity").selectedOptions[0];
     $("#gridTitle").textContent = `ตาราง${{ group: "เรียน", teacher: "สอน", room: "การใช้พื้นที่" }[type]}: ${opt ? opt.textContent : id}`;
     $("#gridBox").innerHTML = gridHTML(type, id);
-    S.attachDnD();
+    if (S.isAdmin()) S.attachDnD();
+    S.renderMine();
     $("#printWho").textContent = $("#gridTitle").textContent;
     $("#printInfo").textContent = `seed ${S.current.seed} · ผ่าน ${S.current.v.passed}/${S.current.v.total} เงื่อนไข · พิมพ์ ${new Date().toLocaleString("th-TH")}`;
   }
@@ -271,7 +276,8 @@
   $("#csvBtn").onclick = () => {
     if (!S.current) return toast("ยังไม่มีผล", "err");
     const lines = [csvLine(["day", "period", "start", "end", "section_id", "subject_id", "subject_name", "kind", "elective_set", "group_ids", "teacher_ids", "teacher_names", "room_ids"])];
-    S.current.rows.forEach(r => lines.push(csvLine([r.day, r.period, `${String(S.cfg.startHour + r.period - 1).padStart(2, "0")}:00`, `${String(S.cfg.startHour + r.period).padStart(2, "0")}:00`,
+    const mine = (r) => !S.user || S.user.role === "admin" || (S.user.role === "teacher" ? r.teachers.includes(S.user.ref) : r.groups.includes(S.user.ref));
+    S.current.rows.filter(mine).forEach(r => lines.push(csvLine([r.day, r.period, `${String(S.cfg.startHour + r.period - 1).padStart(2, "0")}:00`, `${String(S.cfg.startHour + r.period).padStart(2, "0")}:00`,
       r.section, r.subject, r.name, r.kind, r.set, r.groups.join(";"), r.teachers.join(";"), r.teachers.map(tName).join(";"), r.rooms.join(";")])));
     download(`timetable_seed${S.current.seed}.csv`, new Blob(["﻿" + lines.join("\n")], { type: "text/csv" }));
   };
@@ -292,6 +298,10 @@
       const ws = XLSX.utils.aoa_to_sheet(aoa); ws["!cols"] = [{ wch: 10 }, ...Array(P).fill({ wch: 26 })];
       XLSX.utils.book_append_sheet(wb, ws, sheetName.replace(/[\\/?*[\]:]/g, "-").slice(0, 31));
     };
+    if (S.user && S.user.role !== "admin") {
+      addGrid(S.user.role === "teacher" ? "ตารางสอน " + tName(S.user.ref) : "ตารางเรียน กลุ่ม " + S.user.ref, S.user.role === "teacher" ? "teacher" : "group", S.user.ref);
+      XLSX.writeFile(wb, `ตาราง_${S.user.u}.xlsx`); return;
+    }
     S.data.groups.filter(g => S.check.groupHours[g.id]).forEach(g => addGrid("กลุ่ม " + g.id, "group", g.id));
     S.data.teachers.forEach(t => addGrid(t.id + " " + t.name, "teacher", t.id));
     const used = [...new Set(S.current.rows.flatMap(r => r.rooms))];
@@ -322,6 +332,7 @@
   }
 
 /*FEATURES*/
+/*AUTH*/
   // ---------- ไฟล์แม่แบบ ----------
   $("#tplBtn").onclick = () => {
     if (typeof XLSX === "undefined") return toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err");
@@ -340,6 +351,11 @@
   showTab("import");
   const params = new URLSearchParams(location.search);
   if (window.EMBED && params.get("m") === "1") { S.renderMobile(params); return; }
+  // ล็อกอิน: กู้ session เดิม หรือแสดงหน้าล็อกอิน
+  let sess = null;
+  try { sess = sessionStorage.getItem("tt_session"); } catch (e) { /* ignore */ }
+  const su = S.users.find(u => u.u === sess);
+  if (su) { S.user = su; S.applyRole(); } else $("#loginView").classList.add("show");
   // ไฟล์ฉบับฝังข้อมูล: โหลดข้อมูล -> บันทึก -> จัดตารางอัตโนมัติ
   if (window.EMBED) {
     S.sheets = window.EMBED.sheets;

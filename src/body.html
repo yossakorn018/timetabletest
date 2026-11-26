@@ -11,17 +11,34 @@
 <style>/*CSS*/</style>
 </head>
 <body>
+<div id="loginView"><div class="lgbg"></div>
+  <div class="lgcard" id="loginCard">
+    <div class="lglogo">📅</div>
+    <h1>ระบบจัดตารางเรียน-สอนอัตโนมัติ</h1>
+    <p class="muted">คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่</p>
+    <label class="fld">ชื่อผู้ใช้<input id="lgUser" autocomplete="username" placeholder="เช่น admin, t01, g1-1"></label>
+    <label class="fld">รหัสผ่าน<input id="lgPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></label>
+    <p id="lgErr" class="lgerr"></p>
+    <button id="lgBtn" class="primary wide">เข้าสู่ระบบ</button>
+    <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
+    <p class="muted small">บัญชีเริ่มต้น: <b>admin</b> / <b>admin1234</b></p>
+  </div>
+</div>
 <header>
-  <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
-  <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
+  <div>
+    <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
+    <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
+  </div>
+  <div class="userbox"><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
 </header>
 <nav>
   <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
   <button data-tab="solve"><span class="num">2</span>จัดตาราง</button>
   <button data-tab="check"><span class="num">3</span>ตรวจผล</button>
-  <button data-tab="view"><span class="num">4</span>ดูตาราง/ส่งออก</button>
+  <button data-tab="view" data-roles="admin,teacher,student"><span class="num">4</span><span id="viewNavLabel">ดูตาราง/ส่งออก</span></button>
   <button data-tab="report"><span class="num">5</span>รายงาน</button>
   <button data-tab="bench"><span class="num">6</span>หลักฐาน/ทดสอบ</button>
+  <button data-tab="users"><span class="num">7</span>จัดการผู้ใช้</button>
 </nav>
 <main>
 <section class="tab" id="import">
@@ -100,16 +117,16 @@
 <section class="tab" id="view" hidden>
   <h2>ดูตาราง</h2>
   <div class="row noprint">
-    <select id="vType"><option value="group">ตารางเรียน (กลุ่ม)</option><option value="teacher">ตารางสอน (ผู้สอน)</option><option value="room">ตารางการใช้พื้นที่ (ห้อง/สนาม)</option></select>
-    <input id="vSearch" placeholder="ค้นหาชื่อ">
-    <select id="vEntity"></select>
+    <select id="vType" class="adminOnly"><option value="group">ตารางเรียน (กลุ่ม)</option><option value="teacher">ตารางสอน (ผู้สอน)</option><option value="room">ตารางการใช้พื้นที่ (ห้อง/สนาม)</option></select>
+    <input id="vSearch" class="adminOnly" placeholder="ค้นหาชื่อ">
+    <select id="vEntity" class="adminOnly"></select>
     <button id="csvBtn">ส่งออก CSV</button>
     <button id="xlsxBtn">ส่งออก Excel (ทุกตาราง)</button>
     <button id="printBtn">พิมพ์ / PDF</button>
     <button id="qrBtn">📱 QR Code</button>
-    <button id="undoBtn" class="ghost">↶ ย้อนกลับ</button>
+    <button id="undoBtn" class="ghost adminOnly">↶ ย้อนกลับ</button>
   </div>
-  <p class="hint noprint">✋ ลากช่องวิชาไปวางที่ใหม่ได้ — <span class="g">เขียว = วางได้</span> <span class="r">แดง = ชน</span> (ชี้ค้างเพื่อดูเหตุผล) ระบบตรวจเงื่อนไขทั้งหมดใหม่ทุกครั้งที่ย้าย</p>
+  <p class="hint noprint adminOnly">✋ ลากช่องวิชาไปวางที่ใหม่ได้ — <span class="g">เขียว = วางได้</span> <span class="r">แดง = ชน</span> (ชี้ค้างเพื่อดูเหตุผล) ระบบตรวจเงื่อนไขทั้งหมดใหม่ทุกครั้งที่ย้าย</p>
   <h3 id="gridTitle"></h3>
   <div class="print-only print-head"><div><h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่</h1>
     <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p></div><div class="who" id="printWho"></div></div>
@@ -117,6 +134,7 @@
     <div class="legend"><span><i class="k-theory"></i>ทฤษฎี</span><span><i class="k-computer"></i>ห้องคอมพิวเตอร์</span>
       <span><i class="k-sport"></i>ทักษะกีฬา (ห้องเรียน+สนาม)</span><span><i class="k-combined"></i>เรียนรวมทั้งชั้นปี</span>
       <span><i class="k-elective"></i>วิชาเลือก</span></div></div>
+  <div id="mySubjects" class="panel noprint" hidden></div>
   <div class="print-only print-foot"><span id="printInfo"></span><span>พิมพ์จากระบบจัดตารางอัตโนมัติ</span></div>
 </section>
 
@@ -139,6 +157,31 @@
     <div class="row"><b>Stress test: ข้อมูลใหญ่ขึ้น ×1 ×2 ×3 ×5 ×10</b><button id="stressBtn" class="primary">▶ ทดสอบ</button></div>
     <p id="stressStatus" class="muted">จำลองข้อมูลขนาดใหญ่ขึ้นเพื่อวัดเวลา ความเสถียร และหน่วยความจำ</p>
     <table class="list" id="stressTable"></table>
+  </div>
+</section>
+<section class="tab" id="users" hidden>
+  <h2>จัดการผู้ใช้และบทบาท</h2>
+  <div class="panel">
+    <h3>สร้างผู้ใช้ใหม่</h3>
+    <div class="ufrm">
+      <label class="fld">ชื่อผู้ใช้<input id="nuUser" placeholder="a-z 0-9"></label>
+      <label class="fld">ชื่อที่แสดง<input id="nuName" placeholder="เว้นว่างได้ ระบบตั้งให้"></label>
+      <label class="fld">รหัสผ่าน<input id="nuPass" type="text" value="1234"></label>
+      <label class="fld">บทบาท<select id="nuRole"><option value="teacher">อาจารย์</option><option value="student">นักศึกษา</option><option value="admin">ผู้ดูแลระบบ</option></select></label>
+      <label class="fld" id="nuRefWrap">ผูกกับ<select id="nuRef"></select></label>
+      <button id="nuAdd" class="primary">+ สร้างผู้ใช้</button>
+    </div>
+    <div class="row"><b>สร้างหลายบัญชีพร้อมกัน:</b>
+      <button id="bulkTeacher">👩‍🏫 สร้างบัญชีอาจารย์ทุกคน</button>
+      <button id="bulkStudent">🎓 สร้างบัญชีทุกกลุ่มเรียน</button>
+      <span class="muted small">ใช้รหัสผ่านจากช่องด้านบน</span></div>
+  </div>
+  <div class="panel">
+    <h3>ผู้ใช้ทั้งหมด <span class="pill" id="userCount"></span></h3>
+    <table class="list" id="userTable"></table>
+    <div class="row"><button id="usersExport" class="ghost">⬇ ส่งออกรายชื่อผู้ใช้ (JSON)</button>
+      <label class="filebtn ghostbtn">⬆ นำเข้ารายชื่อผู้ใช้ <input type="file" id="usersImport" accept=".json"></label></div>
+    <p class="muted small">สิทธิ์: ผู้ดูแลระบบใช้ได้ทุกเมนู · อาจารย์เห็นเฉพาะตารางสอนและวิชาที่ตัวเองสอน · นักศึกษาเห็นเฉพาะตารางของกลุ่มตัวเอง · รหัสผ่านเก็บเป็น SHA-256 + salt</p>
   </div>
 </section>
 </main>
