@@ -401,6 +401,7 @@
   // ล็อกอิน: กู้ session เดิม หรือแสดงหน้าล็อกอิน
   let sess = null;
   try { sess = sessionStorage.getItem("tt_session"); } catch (e) { /* ignore */ }
+  if (!window.EMBED) S.loadStored();
   const su = S.users.find(u => u.u === sess);
   if (su) { S.user = su; S.applyRole(); } else $("#loginView").classList.add("show");
   // ไฟล์ฉบับฝังข้อมูล: โหลดข้อมูล -> บันทึก -> จัดตารางอัตโนมัติ
