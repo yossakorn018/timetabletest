@@ -292,6 +292,15 @@ button.eye:hover:not(:disabled) { transform: translateY(-50%) scale(1.1); box-sh
 .req select { padding: 5px 8px; font-size: 13px; max-width: 240px; }
 .r-pending { background: #fef3c7; color: #b45309; }
 
+#authModal { position: fixed; inset: 0; background: rgba(15,23,42,.55); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 95; }
+#authModal.show { display: flex; animation: fadeUp .2s ease; }
+.modal.am { width: min(420px, 92vw); } .modal.am.shake { animation: shake .4s ease 2; }
+.amico { font-size: 40px; } .amrow { justify-content: flex-end; }
+tr.editing td { background: #f5f8ff !important; vertical-align: middle; }
+tr.editing input, tr.editing select { width: 100%; padding: 5px 8px; font-size: 13px; }
+tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
+.pwmask { letter-spacing: 1px; } .pwat { display: block; font-size: 11.5px; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -299,7 +308,7 @@ button.eye:hover:not(:disabled) { transform: translateY(-50%) scale(1.1); box-sh
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   @page { size: A4 landscape; margin: 8mm; }
   body { background: #fff; font-size: 12px; }
-  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView { display: none !important; }
+  header, nav, .noprint, #toast, #gridTitle, #qrModal, #dndHint, #mobile, #loginView, #authModal { display: none !important; }
   main { padding: 0; max-width: none; }
   section.tab { display: none !important; animation: none; }
   section#view { display: block !important; }

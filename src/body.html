@@ -238,6 +238,14 @@
   <button id="qrAllBtn" class="ghost">แสดง QR ทุกกลุ่ม</button>
   <div id="qrAll"></div>
 </div></div>
+<div id="authModal"><div class="modal am">
+  <div class="amico">🛡️</div>
+  <h3>ยืนยันตัวตนผู้ดูแลระบบ</h3>
+  <p id="amReason" class="muted"></p>
+  <label class="fld">รหัสผ่านของคุณ (ผู้ดูแลระบบ)<span class="pwwrap"><input id="amPass" type="password" autocomplete="current-password" placeholder="รหัสผ่านผู้ดูแล"><button type="button" class="eye" data-for="amPass" aria-label="แสดงรหัสผ่าน"></button></span></label>
+  <p id="amErr" class="lgerr"></p>
+  <div class="row amrow"><button id="amCancel" class="ghost">ยกเลิก</button><button id="amOk" class="primary">ยืนยัน</button></div>
+</div></div>
 <div id="dndHint"></div>
 <div id="toast"></div>
 <script>/*ENGINE*/</script>

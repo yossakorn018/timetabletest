@@ -26,7 +26,7 @@
   const EYE = '<button type="button" class="eye" data-for="%s" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button>';
   const ROLE_TH = { admin: "ผู้ดูแลระบบ", teacher: "อาจารย์", student: "นักศึกษา" };
   const newSalt = () => Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-  function makeUser(u, name, role, ref, pw) { const salt = newSalt(); return { u: u.trim().toLowerCase(), name, role, ref: ref || "", salt, hash: sha256(salt + pw) }; }
+  function makeUser(u, name, role, ref, pw) { const salt = newSalt(); return { u: u.trim().toLowerCase(), name, role, ref: ref || "", salt, hash: sha256(salt + pw), pwAt: new Date().toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) }; }
   function loadUsers() {
     let us = null;
     try { us = JSON.parse(localStorage.getItem("tt_users") || "null"); } catch (e) { /* ignore */ }
@@ -201,8 +201,11 @@
       const i = +b.dataset.reset, r = S.reqs[i], usr = S.users.find(x => x.u === r.u), pw = $("#rq-pw-" + i).value;
       if (!usr) return done(i, "ไม่พบบัญชีนี้แล้ว ปิดคำขอ");
       if (pw.length < 4) return toast("รหัสผ่านอย่างน้อย 4 ตัวอักษร", "err");
-      usr.salt = newSalt(); usr.hash = sha256(usr.salt + pw);
-      done(i, `ตั้งรหัสผ่านใหม่ให้ ${r.u} แล้ว — แจ้งรหัส "${pw}" ให้ผู้ใช้`);
+      askAdminPassword(`ยืนยันตัวตนเพื่อตั้งรหัสผ่านใหม่ให้ "${r.u}"`).then(ok => {
+        if (!ok) return toast("ยกเลิกการเปลี่ยนรหัสผ่าน", "err");
+        setPassword(usr, pw);
+        done(i, `ตั้งรหัสผ่านใหม่ให้ ${r.u} แล้ว — แจ้งรหัส "${pw}" ให้ผู้ใช้`);
+      });
     });
     box.querySelectorAll("[data-dismiss]").forEach(b => b.onclick = () => done(+b.dataset.dismiss, "ปิดคำขอแล้ว"));
     box.querySelectorAll("[data-approve]").forEach(b => b.onclick = () => {
@@ -241,22 +244,82 @@
   }
   const tNameSafe = (id) => (S.data && S.data.teachers.find(t => t.id === id) || { name: id }).name;
   function renderUsers() { renderReqs(); renderUsersTable(); }
+  // ---------- ยืนยันตัวตนด้วยรหัส admin ก่อนเปลี่ยนรหัสผ่าน ----------
+  function askAdminPassword(reason) {
+    return new Promise((resolve) => {
+      const m = $("#authModal");
+      $("#amReason").textContent = reason;
+      $("#amPass").value = ""; $("#amPass").type = "password"; $("#amErr").textContent = "";
+      m.querySelector(".eye").classList.remove("on");
+      m.classList.add("show");
+      setTimeout(() => $("#amPass").focus(), 50);
+      const close = (ok) => { m.classList.remove("show"); $("#amOk").onclick = $("#amCancel").onclick = $("#amPass").onkeydown = null; resolve(ok); };
+      const check = () => {
+        if (S.user && S.user.hash === sha256(S.user.salt + $("#amPass").value)) return close(true);
+        $("#amErr").textContent = "รหัสผ่านผู้ดูแลไม่ถูกต้อง";
+        const box = m.querySelector(".modal"); box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+      };
+      $("#amOk").onclick = check;
+      $("#amCancel").onclick = () => close(false);
+      $("#amPass").onkeydown = (e) => { if (e.key === "Enter") check(); if (e.key === "Escape") close(false); };
+    });
+  }
+  S.askAdminPassword = askAdminPassword;
+  function setPassword(u, pw) { u.salt = newSalt(); u.hash = sha256(u.salt + pw); u.pwAt = nowTH(); }
+
+  let editIdx = -1;
   function renderUsersTable() {
     fillRef();
-    $("#userTable").innerHTML = `<tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สิทธิ์เห็นข้อมูล</th><th></th></tr>` +
-      S.users.map((u, i) => `<tr><td><b>${esc(u.u)}</b></td><td>${esc(u.name)}</td><td><span class="rbadge r-${u.role}">${ROLE_TH[u.role]}</span></td>
-        <td>${esc(refName(u))}${u.status === "pending" ? ' <span class="rbadge r-pending">รออนุมัติ</span>' : ""}</td><td class="acts"><button class="small" data-pw="${i}">รีเซ็ตรหัส</button>
+    const roleSel = (cur) => Object.entries(ROLE_TH).map(([v, n]) => `<option value="${v}" ${v === cur ? "selected" : ""}>${n}</option>`).join("");
+    const refSel = (role, cur) => role === "admin" ? `<span class="muted">ทุกเมนู</span>` :
+      `<select class="e-ref">${refOptions(role).map(([v, n]) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(n)}</option>`).join("") || `<option value="${esc(cur)}">${esc(cur || "— นำเข้าข้อมูลก่อน —")}</option>`}</select>`;
+    $("#userTable").innerHTML = `<tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สิทธิ์เห็นข้อมูล</th><th>รหัสผ่าน</th><th></th></tr>` +
+      S.users.map((u, i) => i === editIdx ? `<tr class="editing">
+        <td><input class="e-u" value="${esc(u.u)}"></td>
+        <td><input class="e-name" value="${esc(u.name)}"></td>
+        <td><select class="e-role" ${u.u === S.user?.u ? "disabled" : ""}>${roleSel(u.role)}</select></td>
+        <td class="e-refcell">${refSel(u.role, u.ref)}</td>
+        <td><span class="pwwrap sm"><input type="password" class="e-pw" id="e-pw" placeholder="เว้นว่าง = ไม่เปลี่ยน">${EYE.replace("%s", "e-pw")}</span></td>
+        <td class="acts"><button class="small primary" data-save="${i}">บันทึก</button><button class="small ghost" data-cancel="1">ยกเลิก</button></td></tr>`
+      : `<tr><td><b>${esc(u.u)}</b></td><td>${esc(u.name)}</td><td><span class="rbadge r-${u.role}">${ROLE_TH[u.role]}</span></td>
+        <td>${esc(refName(u))}${u.status === "pending" ? ' <span class="rbadge r-pending">รออนุมัติ</span>' : ""}</td>
+        <td><span class="pwmask" title="เก็บเป็น SHA-256 + salt จึงดูรหัสเดิมไม่ได้ เปลี่ยนเป็นรหัสใหม่ได้">🔒 ••••••</span><small class="muted pwat">${u.pwAt ? "ตั้งเมื่อ " + esc(u.pwAt) : "เข้ารหัสแล้ว"}</small></td>
+        <td class="acts"><button class="small" data-edit="${i}">✏️ แก้ไข</button>
         <button class="small danger" data-del="${i}" ${u.u === S.user?.u ? "disabled" : ""}>ลบ</button></td></tr>`).join("");
-    $("#userTable").querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const T = $("#userTable");
+    T.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
       const u = S.users[+b.dataset.del];
       if (!confirmInline(b, `ลบ ${u.u}?`)) return;
-      S.users.splice(+b.dataset.del, 1); saveUsers(); renderUsers(); toast(`ลบผู้ใช้ ${u.u} แล้ว`, "ok");
+      S.users.splice(+b.dataset.del, 1); editIdx = -1; saveUsers(); renderUsers(); toast(`ลบผู้ใช้ ${u.u} แล้ว`, "ok");
     });
-    $("#userTable").querySelectorAll("[data-pw]").forEach(b => b.onclick = () => {
-      const u = S.users[+b.dataset.pw], pw = $("#nuPass").value || "1234";
-      u.salt = newSalt(); u.hash = sha256(u.salt + pw); saveUsers();
-      toast(`ตั้งรหัสผ่าน ${u.u} เป็น "${pw}" แล้ว`, "ok");
-    });
+    T.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editIdx = +b.dataset.edit; renderUsersTable(); T.querySelector(".e-u").focus(); });
+    T.querySelectorAll("[data-cancel]").forEach(b => b.onclick = () => { editIdx = -1; renderUsersTable(); });
+    const row = T.querySelector("tr.editing");
+    if (row) {
+      row.querySelector(".eye").onclick = () => { const inp = row.querySelector(".e-pw"); const s = inp.type === "password"; inp.type = s ? "text" : "password"; row.querySelector(".eye").classList.toggle("on", s); };
+      row.querySelector(".e-role").onchange = (e) => { row.querySelector(".e-refcell").innerHTML = refSel(e.target.value, ""); };
+      row.querySelectorAll("input").forEach(inp => inp.onkeydown = (e) => { if (e.key === "Enter") row.querySelector("[data-save]").click(); if (e.key === "Escape") { editIdx = -1; renderUsersTable(); } });
+      row.querySelector("[data-save]").onclick = async () => {
+        const i = editIdx, u = S.users[i];
+        const nu = row.querySelector(".e-u").value.trim().toLowerCase(), name = row.querySelector(".e-name").value.trim();
+        const role = row.querySelector(".e-role").value, refEl = row.querySelector(".e-ref"), ref = role === "admin" ? "" : (refEl ? refEl.value : "");
+        const pw = row.querySelector(".e-pw").value;
+        if (!/^[a-z0-9._-]{3,}$/.test(nu)) return toast("ชื่อผู้ใช้ต้องเป็น a-z 0-9 . _ - อย่างน้อย 3 ตัว", "err");
+        if (S.users.some((x, j) => j !== i && x.u === nu)) return toast("มีชื่อผู้ใช้นี้แล้ว", "err");
+        if (!name) return toast("กรอกชื่อที่แสดง", "err");
+        if (role !== "admin" && !ref) return toast("เลือกอาจารย์/กลุ่มที่ผูกกับบัญชีก่อน", "err");
+        if (pw && pw.length < 4) return toast("รหัสผ่านอย่างน้อย 4 ตัวอักษร", "err");
+        if (u.role === "admin" && role !== "admin" && S.users.filter(x => x.role === "admin").length === 1) return toast("ต้องมีผู้ดูแลระบบอย่างน้อย 1 บัญชี", "err");
+        if (pw && !(await askAdminPassword(`ยืนยันตัวตนเพื่อเปลี่ยนรหัสผ่านของ "${u.u}"`))) return toast("ยกเลิกการเปลี่ยนรหัสผ่าน", "err");
+        const old = u.u, self = S.user && S.user.u === old;
+        S.reqs.forEach(r => { if (r.u === old) r.u = nu; }); saveReqs();
+        Object.assign(u, { u: nu, name, role, ref });
+        if (pw) setPassword(u, pw);
+        if (self) { try { sessionStorage.setItem("tt_session", nu); } catch (e) { /* ignore */ } $("#userName").textContent = name; }
+        editIdx = -1; saveUsers(); renderUsers();
+        toast(`บันทึก ${nu} แล้ว${old !== nu ? ` (เปลี่ยนชื่อผู้ใช้จาก ${old})` : ""}${pw ? " · เปลี่ยนรหัสผ่านแล้ว" : ""}`, "ok");
+      };
+    }
     $("#userCount").textContent = `${S.users.length} บัญชี · ผู้ดูแล ${S.users.filter(u => u.role === "admin").length} · อาจารย์ ${S.users.filter(u => u.role === "teacher").length} · นักศึกษา ${S.users.filter(u => u.role === "student").length}`;
   }
   // ยืนยันด้วยการกดซ้ำ (ไม่ใช้ confirm() ของเบราว์เซอร์)
