@@ -323,6 +323,8 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 #cloudBar { position: fixed; top: 14px; left: 50%; transform: translate(-50%, -80px); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 12px; z-index: 99; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .3s; display: flex; gap: 10px; align-items: center; font-size: 14px; }
 #cloudBar.show { transform: translate(-50%, 0); } #cloudBar button { padding: 5px 12px; }
 
+.lgreset { font-size: 12px; margin: 12px 0 0; } .lgreset a { color: var(--muted) !important; font-weight: 400 !important; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -392,6 +394,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
       <button id="rgBtn" class="primary wide">สมัครบัญชี</button>
       <p class="lgswitch">มีบัญชีแล้ว? <a href="#" data-pane="paneLogin">เข้าสู่ระบบ</a></p>
     </div>
+    <p class="lgreset"><a href="#" id="localReset">ล้างข้อมูลที่ค้างในเครื่องนี้</a></p>
     <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
   </div>
 </div>
@@ -2106,6 +2109,20 @@ window.__startApp = function () {
     toast(`ยินดีต้อนรับ ${usr.name}`, "ok");
   }
   $("#lgBtn").onclick = doLogin;
+  // ล้างข้อมูลเก่าที่ค้างในเบราว์เซอร์เครื่องนี้ (ไม่ลบข้อมูลบนเซิร์ฟเวอร์)
+  $("#localReset").onclick = (e) => {
+    e.preventDefault();
+    const a = e.target;
+    if (!a.dataset.armed) {
+      a.dataset.armed = "1"; a.textContent = "กดอีกครั้งเพื่อยืนยัน: ล้างตาราง/บัญชีที่ค้างในเครื่องนี้";
+      setTimeout(() => { delete a.dataset.armed; a.textContent = "ล้างข้อมูลที่ค้างในเครื่องนี้"; }, 3000);
+      return;
+    }
+    if (window.CLOUD) window.CLOUD.applying = true;   // ไม่ส่งการลบขึ้นเซิร์ฟเวอร์
+    ["tt_sched", "tt_users", "tt_requests", "tt_cfg", "tt_demo_v1"].forEach(k => { try { localStorage.removeItem(k); } catch (err) { /* ignore */ } });
+    try { sessionStorage.removeItem("tt_session"); } catch (err) { /* ignore */ }
+    location.reload();
+  };
   document.querySelectorAll("[data-demo]").forEach(b => b.onclick = () => { const [u, p] = b.dataset.demo.split("|"); $("#lgUser").value = u; $("#lgPass").value = p; $("#lgBtn").focus(); });
   $("#lgPass").onkeydown = $("#lgUser").onkeydown = (e) => { if (e.key === "Enter") doLogin(); };
   $("#logoutBtn").onclick = () => {

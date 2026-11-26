@@ -67,6 +67,20 @@
     toast(`ยินดีต้อนรับ ${usr.name}`, "ok");
   }
   $("#lgBtn").onclick = doLogin;
+  // ล้างข้อมูลเก่าที่ค้างในเบราว์เซอร์เครื่องนี้ (ไม่ลบข้อมูลบนเซิร์ฟเวอร์)
+  $("#localReset").onclick = (e) => {
+    e.preventDefault();
+    const a = e.target;
+    if (!a.dataset.armed) {
+      a.dataset.armed = "1"; a.textContent = "กดอีกครั้งเพื่อยืนยัน: ล้างตาราง/บัญชีที่ค้างในเครื่องนี้";
+      setTimeout(() => { delete a.dataset.armed; a.textContent = "ล้างข้อมูลที่ค้างในเครื่องนี้"; }, 3000);
+      return;
+    }
+    if (window.CLOUD) window.CLOUD.applying = true;   // ไม่ส่งการลบขึ้นเซิร์ฟเวอร์
+    ["tt_sched", "tt_users", "tt_requests", "tt_cfg", "tt_demo_v1"].forEach(k => { try { localStorage.removeItem(k); } catch (err) { /* ignore */ } });
+    try { sessionStorage.removeItem("tt_session"); } catch (err) { /* ignore */ }
+    location.reload();
+  };
   document.querySelectorAll("[data-demo]").forEach(b => b.onclick = () => { const [u, p] = b.dataset.demo.split("|"); $("#lgUser").value = u; $("#lgPass").value = p; $("#lgBtn").focus(); });
   $("#lgPass").onkeydown = $("#lgUser").onkeydown = (e) => { if (e.key === "Enter") doLogin(); };
   $("#logoutBtn").onclick = () => {
