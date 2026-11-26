@@ -268,6 +268,12 @@ td.acts { white-space: nowrap; }
 body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !important; }
 #mySubjects h3 { margin-top: 0; }
 
+.explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 10px; }
+.explain > div { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+.explain .en { font-size: 24px; display: block; } .explain b { font-family: "Prompt", sans-serif; } .explain p { margin: 4px 0 0; font-size: 14px; color: #3a4357; }
+.analogy { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin: 8px 0 14px; }
+.cap { font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -431,18 +437,26 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
 </section>
 <section class="tab" id="bench" hidden>
   <h2>หลักฐานเชิงตัวเลข: AI ดีกว่าวิธีพื้นฐานแค่ไหน</h2>
+  <div class="explain">
+    <div><span class="en">❓</span><b>หน้านี้ตอบคำถาม</b><p>AI ของเราเก่งจริง หรือแค่ฟลุก?</p></div>
+    <div><span class="en">🧪</span><b>ทดสอบยังไง</b><p>ใช้ข้อมูลชุดเดียวกัน จัดด้วย 4 วิธี วิธีละหลายรอบ แล้วนับว่าแต่ละวิธีจัดวิชาลงตารางได้ครบกี่ครั้ง</p></div>
+    <div><span class="en">🏆</span><b>ผลที่ได้</b><p>จัดแบบธรรมดาตกหล่นหลายสิบคาบ ระบบเราจัดครบทุกรอบ เพราะ <b>จัดวิชาที่ยากก่อน</b> และ <b>ถ้าติดจะย้ายวิชาอื่นออกแล้วจัดใหม่เอง</b></p></div>
+  </div>
+  <p class="analogy">💡 เปรียบเหมือนจัดของลงกระเป๋า: วิธีธรรมดาหยิบตามลำดับ ของเหลือนอกกระเป๋า · ระบบเราใส่ชิ้นใหญ่ก่อน ถ้ามีชิ้นใส่ไม่ลงก็หยิบบางชิ้นออกมาจัดใหม่ จนใส่ได้หมด</p>
   <div class="panel">
     <div class="row"><b>เปรียบเทียบ 4 วิธี (ablation)</b>
       <label>จำนวน seed ต่อวิธี <input type="number" id="benchN" value="50" min="5" max="500"></label>
       <button id="benchBtn" class="primary">▶ รันเปรียบเทียบ</button></div>
     <p id="benchStatus" class="muted">แต่ละวิธีรันด้วย seed ชุดเดียวกัน แล้วตรวจผลด้วยตัวตรวจอิสระ 11 ข้อ เพื่อดูว่าแต่ละส่วนของอัลกอริทึมช่วยได้จริง</p>
     <div class="cards" id="benchCards"></div>
-    <div class="charts"><div id="benchChart1"></div><div id="benchChart2"></div></div>
+    <div class="charts"><div><div id="benchChart1"></div><p class="cap">แท่งยาว = ดี · จาก N รอบ จัดวิชาลงตารางได้ครบทุกคาบกี่ % ของรอบ</p></div>
+      <div><div id="benchChart2"></div><p class="cap">แท่งสั้น = ดี · เฉลี่ยแล้วมีกี่คาบที่หาช่องลงไม่ได้</p></div></div>
     <table class="list" id="benchTable"></table>
   </div>
   <div class="panel">
     <div class="row"><b>Stress test: ข้อมูลใหญ่ขึ้น ×1 ×2 ×3 ×5 ×10</b><button id="stressBtn" class="primary">▶ ทดสอบ</button></div>
     <p id="stressStatus" class="muted">จำลองข้อมูลขนาดใหญ่ขึ้นเพื่อวัดเวลา ความเสถียร และหน่วยความจำ</p>
+    <p class="analogy">💡 ตารางนี้ตอบคำถามว่า "ถ้ามหาวิทยาลัยใหญ่ขึ้น 10 เท่า ระบบยังไหวไหม" — ดูคอลัมน์ <b>คาบที่ขาด</b> (ควรเป็น 0) และ <b>เวลาเฉลี่ย</b> (ควรน้อย)</p>
     <table class="list" id="stressTable"></table>
   </div>
 </section>
