@@ -112,6 +112,7 @@ table.list tr:last-child td { border-bottom: 0; }
 table.list tr:hover td { background: #f8faff; }
 table.list tr.sel td { background: #eaf1ff; }
 td.good { color: var(--ok); font-weight: 700; }
+td.bad { color: var(--err, #dc2626); font-weight: 700; }
 .two { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
 .two > div:first-child { width: 260px; } .grow { flex: 1; min-width: 320px; }
 .scroll { max-height: 520px; overflow: auto; border-radius: 10px; }
@@ -663,7 +664,10 @@ a.manual:hover { background: rgba(255,255,255,.28); }
     electiveCap: 20,
     electiveNeedsTheoryRoom: "lectureOnly",   // lectureOnly | always | never
     noScheduleYears: [4],                     // ปี 4 ฝึกสอนทั้งภาค ไม่จัดคาบ
-    allowSplit: true                          // วิชาทฤษฎีแบ่งเป็นช่วงสั้นได้ถ้าลงบล็อกเดียวไม่ได้
+    allowSplit: true,                         // วิชาทฤษฎีแบ่งเป็นช่วงสั้นได้ถ้าลงบล็อกเดียวไม่ได้
+    maxGroupPerDay: 6,                        // soft: กลุ่มเรียนไม่ควรเรียนเกินกี่คาบต่อวัน
+    maxTeacherPerDay: 6,                      // soft: ผู้สอนไม่ควรสอนเกินกี่คาบต่อวัน
+    improvePasses: 3                          // จำนวนรอบปรับปรุงหลังจัดเสร็จ (0 = ปิด)
   };
 
   // ---------------- ตัวช่วย ----------------
@@ -918,7 +922,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 
   function makeState(data, cfg) {
     const tm = timeModel(data, cfg);
-    return { tm, busy: new Map(), placed: new Map(), groupDay: {} };
+    return { tm, busy: new Map(), placed: new Map(), groupDay: {}, teacherDay: {} };
   }
   const K = (type, id, slot) => type + "|" + id + "|" + slot;
 
@@ -964,6 +968,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
     }
     const d = Math.floor(place.slots[0] / st.tm.P);
     task.groups.forEach(g => { st.groupDay[g + "|" + d] = (st.groupDay[g + "|" + d] || 0) + place.slots.length; });
+    task.teachers.forEach(t => { st.teacherDay[t + "|" + d] = (st.teacherDay[t + "|" + d] || 0) + place.slots.length; });
     if (st.trace) st.trace.push({ t: "place", id: task.id, groups: task.groups, slots: place.slots.slice(), kind: task.kind });
     if (!st.placed.has(task.id)) st.placed.set(task.id, []);
     st.placed.get(task.id).push(place);
@@ -981,17 +986,36 @@ a.manual:hover { background: rgba(255,255,255,.28); }
       }
       const d = Math.floor(place.slots[0] / st.tm.P);
       task.groups.forEach(g => { st.groupDay[g + "|" + d] -= place.slots.length; });
+      task.teachers.forEach(t => { st.teacherDay[t + "|" + d] -= place.slots.length; });
     }
     st.placed.delete(task.id);
   }
 
-  // คะแนนโทษของช่อง (ยิ่งน้อยยิ่งดี) — soft constraint
-  function penalty(st, task, d, p0, L, usedDays, rng, jitter) {
+  // ---------------- โทษการกระจายภาระ (soft constraint) ----------------
+  // ต้นทุนของ 1 วัน ที่มี load คาบ: load² ทำให้ "วันละ 5+5" ถูกกว่า "8+2" (กระจายสม่ำเสมอ)
+  // และบวกโทษหนักเมื่อเกินเพดาน (ค่า max ตั้งได้ในหน้าตั้งค่า)
+  const OVER_W = 60;   // โทษต่อคาบที่เกินเพดานต่อวัน
+  const SPLIT_W = 8;   // โทษเล็กน้อยเมื่อแบ่งวิชาเป็นช่วง (ถ้าต้นทุนเท่ากัน เลือกเรียนรวดเดียว)
+  function dayCost(load, max) { return load * load + Math.max(0, load - max) * OVER_W; }
+  const maxG = (cfg) => cfg.maxGroupPerDay || 6, maxT = (cfg) => cfg.maxTeacherPerDay || 6;
+  // ต้นทุนรวมของทั้งตาราง (ใช้เทียบก่อน/หลังปรับปรุง)
+  function balanceCost(st, cfg) {
+    let c = 0;
+    for (const k in st.groupDay) c += dayCost(st.groupDay[k], maxG(cfg));
+    for (const k in st.teacherDay) c += dayCost(st.teacherDay[k], maxT(cfg)) / 2;   // ครูให้น้ำหนักครึ่งหนึ่งของนักศึกษา
+    return c;
+  }
+
+  // คะแนนโทษของช่อง (ยิ่งน้อยยิ่งดี) = ต้นทุนที่เพิ่มขึ้นถ้าวางวิชานี้ในวันนี้
+  function penalty(st, task, d, p0, L, usedDays, rng, jitter, cfg) {
     let pen = 0;
     for (const g of task.groups) {
-      const load = (st.groupDay[g + "|" + d] || 0) + L;
-      if (load > 6) pen += (load - 6) * 20;          // ไม่ให้วันเดียวเรียนหนักเกิน 6 คาบ
-      pen += load;                                    // กระจายภาระให้สม่ำเสมอ
+      const cur = st.groupDay[g + "|" + d] || 0;
+      pen += dayCost(cur + L, maxG(cfg)) - dayCost(cur, maxG(cfg));
+    }
+    for (const t of task.teachers) {
+      const cur = st.teacherDay[t + "|" + d] || 0;
+      pen += (dayCost(cur + L, maxT(cfg)) - dayCost(cur, maxT(cfg))) / 2;
     }
     if (usedDays.has(d)) pen += 40;                   // วิชาที่ถูกแบ่ง ไม่ควรอยู่วันเดียวกัน
     if (task.kind === "theory" && p0 + L - 1 >= st.tm.P) pen += 3;  // เลี่ยงทฤษฎีคาบสุดท้าย
@@ -1010,7 +1034,8 @@ a.manual:hover { background: rgba(255,255,255,.28); }
   }
 
   function tryTask(st, cfg, task, rng, opts) {
-    for (const plan of chunkPlans(task, cfg)) {
+    const plans = chunkPlans(task, cfg);
+    for (const plan of (opts.onlyPlan !== undefined ? [plans[opts.onlyPlan]].filter(Boolean) : plans)) {
       const usedDays = new Set();
       let ok = true;
       for (let ci = 0; ci < plan.length; ci++) {
@@ -1021,7 +1046,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
           const pl = canPlace(st, cfg, task, d, p, L, rng);
           if (!pl) continue;
           if (opts.firstFit) { best = { pl, d, pen: 0 }; break; }
-          const pen = penalty(st, task, d, p, L, usedDays, rng, opts.jitter);
+          const pen = penalty(st, task, d, p, L, usedDays, rng, opts.jitter, cfg);
           if (!best || pen < best.pen) best = { pl, d, pen };
           if (best && opts.firstFit) break;
         }
@@ -1097,6 +1122,46 @@ a.manual:hover { background: rgba(255,255,255,.28); }
     return unplaced;
   }
 
+  // ปรับปรุง (local search): หยิบวิชาออกทีละวิชา แล้ววางใหม่ในช่องที่โทษน้อยสุด
+  // รับผลใหม่เฉพาะเมื่อต้นทุนการกระจายภาระลดลง ไม่งั้นคืนที่เดิม -> ไม่มีทางแย่ลง และไม่ทำให้ชน
+  function improve(st, cfg, tasks, rng, opts, log) {
+    const passes = opts.improvePasses !== undefined ? opts.improvePasses : (cfg.improvePasses !== undefined ? cfg.improvePasses : 3);
+    const before = balanceCost(st, cfg);
+    let moves = 0;
+    const tr0 = st.trace; st.trace = null;
+    for (let pass = 0; pass < passes; pass++) {
+      const order = tasks.filter(t => st.placed.has(t.id));
+      for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+      let movedThisPass = 0;
+      for (const task of order) {
+        const old = st.placed.get(task.id), oldSplit = task.splitUsed;
+        const score = () => balanceCost(st, cfg) + (task.splitUsed ? SPLIT_W : 0);
+        const c0 = score();
+        release(st, task);
+        // ลองทุกแบบการแบ่งช่วง (เช่น 4 คาบรวด / 2+2 คนละวัน) แล้วเก็บแบบที่ต้นทุนต่ำสุด
+        let best = null;
+        const nPlans = opts.noSplit ? 1 : chunkPlans(task, cfg).length;
+        for (let pi = 0; pi < nPlans; pi++) {
+          if (!tryTask(st, cfg, task, rng, Object.assign({}, opts, { jitter: 0, onlyPlan: pi }))) continue;
+          const c = score();
+          if (!best || c < best.c) best = { c, pls: st.placed.get(task.id).slice(), split: task.splitUsed };
+          release(st, task);
+        }
+        if (best && best.c < c0 - 1e-9) {
+          best.pls.forEach((pl, ci) => occupy(st, task, pl, ci)); task.splitUsed = best.split;
+          moves++; movedThisPass++; continue;
+        }
+        old.forEach((pl, ci) => occupy(st, task, pl, ci));
+        task.splitUsed = oldSplit;
+      }
+      if (!movedThisPass) break;
+    }
+    st.trace = tr0;
+    const after = balanceCost(st, cfg);
+    log.push(`ปรับปรุงการกระจายภาระ: ย้าย ${moves} ครั้ง ต้นทุน ${Math.round(before)} → ${Math.round(after)}`);
+    return { before: Math.round(before), after: Math.round(after), moves };
+  }
+
   function buildOutput(st, data, cfg, tasks) {
     const rows = [];
     const { P } = st.tm;
@@ -1124,7 +1189,7 @@ a.manual:hover { background: rgba(255,255,255,.28); }
 
   // แก้ปัญหา 1 รอบด้วย seed หนึ่ง
   TT.solveOnce = function (data, cfg, seed, opts) {
-    opts = Object.assign({ jitter: 8, repairIters: 400, firstFit: false, noSplit: false, ordered: true, repair: true }, opts || {});
+    opts = Object.assign({ jitter: 8, repairIters: 400, firstFit: false, noSplit: false, ordered: true, repair: true, improve: true }, opts || {});
     const rng = TT.mulberry32(seed >>> 0);
     const st = makeState(data, cfg);
     st.trace = opts.trace ? [] : null;
@@ -1145,16 +1210,17 @@ a.manual:hover { background: rgba(255,255,255,.28); }
     if (st.trace && unplaced.length) st.trace.push({ t: "check", unplaced: unplaced.map(t => t.id) });
     const greedyUnplaced = unplaced.length;
     if (opts.repair && unplaced.length) unplaced = repair(st, cfg, tasks, unplaced, rng, opts, log);
+    const imp = opts.improve ? improve(st, cfg, tasks, rng, opts, log) : null;
     const rows = buildOutput(st, data, cfg, tasks);
     const unplacedHours = unplaced.reduce((a, t) => a + t.hours * t.sections.length, 0);
     return { seed, rows, unplaced: unplaced.map(t => ({ id: t.id, label: t.label, hours: t.hours })), unplacedHours,
-      penalty: Math.round(st.penalty || 0), greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log,
+      penalty: Math.round(balanceCost(st, cfg)), improve: imp, greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log,
       trace: st.trace, meta: Object.fromEntries(tasks.map(t => [t.id, { label: t.label, kind: t.kind, hours: t.hours }])) };
   };
 
   // วิธีพื้นฐาน (baseline): ลำดับตามไฟล์ วางช่องแรกที่ว่าง ไม่แบ่ง ไม่ซ่อม
   TT.solveBaseline = function (data, cfg) {
-    return TT.solveOnce(data, cfg, 1, { ordered: false, firstFit: true, repair: false, noSplit: true, jitter: 0 });
+    return TT.solveOnce(data, cfg, 1, { ordered: false, firstFit: true, repair: false, improve: false, noSplit: true, jitter: 0 });
   };
 
   // ---------------- 4) ตัวตรวจผล ----------------
@@ -1262,7 +1328,27 @@ a.manual:hover { background: rgba(255,255,255,.28); }
       r.teachers.forEach(t => { const k = t + "|" + r.slot; if (!seenT.has(k)) { seenT.add(k); teacherLoad[t] = (teacherLoad[t] || 0) + 1; } });
       r.rooms.forEach(x => { const k = x + "|" + r.slot; if (!seenR.has(k)) { seenR.add(k); roomUse[x] = (roomUse[x] || 0) + 1; } });
     });
-    return { teacherLoad, roomUse, freeSlots: tm.free };
+    return Object.assign({ teacherLoad, roomUse, freeSlots: tm.free }, TT.loadBalance(data, cfg, rows));
+  };
+
+  // ตัวชี้วัดการกระจายภาระรายวัน (คำนวณจากผลลัพธ์ ใช้ได้กับทุกวิธี รวมถึง baseline)
+  TT.loadBalance = function (data, cfg, rows) {
+    const P = cfg.periods;
+    const gd = {}, td = {}, seen = new Set();
+    rows.forEach(r => {
+      const d = Math.floor(r.slot / P);
+      r.groups.forEach(g => { const k = "G" + g + "|" + r.slot; if (!seen.has(k)) { seen.add(k); gd[g + "|" + d] = (gd[g + "|" + d] || 0) + 1; } });
+      r.teachers.forEach(t => { const k = "T" + t + "|" + r.slot; if (!seen.has(k)) { seen.add(k); td[t + "|" + d] = (td[t + "|" + d] || 0) + 1; } });
+    });
+    const gv = Object.values(gd), tv = Object.values(td);
+    const mg = cfg.maxGroupPerDay || 6, mt = cfg.maxTeacherPerDay || 6;
+    const groupDays = {};
+    for (const k in gd) { const [g, d] = k.split("|"); (groupDays[g] = groupDays[g] || Array(cfg.days.length).fill(0))[+d] = gd[k]; }
+    return {
+      maxGroupDay: Math.max(0, ...gv), maxTeacherDay: Math.max(0, ...tv),
+      groupDaysOver: gv.filter(v => v > mg).length, teacherDaysOver: tv.filter(v => v > mt).length,
+      groupDays, maxGroupPerDay: mg, maxTeacherPerDay: mt
+    };
   };
 
   if (typeof module !== "undefined") module.exports = TT; else window.TT = TT;
@@ -1309,7 +1395,8 @@ window.__startApp = function () {
   function loadCfg() {
     let saved = null;
     try { saved = localStorage.getItem("tt_cfg"); } catch (e) { /* ignore */ }
-    S.cfg = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(TT.DEFAULT_CONFIG));
+    // รวมค่าเริ่มต้นเข้าไปด้วย เพื่อให้ค่าใหม่ (เช่น maxGroupPerDay) โผล่ในหน้าตั้งค่าแม้เคยบันทึกค่าเก่าไว้
+    S.cfg = Object.assign(JSON.parse(JSON.stringify(TT.DEFAULT_CONFIG)), saved ? JSON.parse(saved) : {});
     $("#cfg").value = JSON.stringify(S.cfg, null, 2);
   }
   $("#cfgApply").onclick = () => {
@@ -1465,11 +1552,16 @@ window.__startApp = function () {
     const b = S.baseline, a = S.current;
     if (!b || !a) return;
     const row = (k, x, y, better) => `<tr><td>${k}</td><td>${x}</td><td class="${better ? "good" : ""}">${y}</td></tr>`;
-    $("#compare").innerHTML = `<tr><th>ตัวชี้วัด</th><th>วิธีพื้นฐาน<br><small>ลำดับตามไฟล์ วางช่องแรกที่ว่าง</small></th><th>ระบบ AI<br><small>Heuristic + seed + ซ่อม</small></th></tr>` +
+    const lb = TT.loadBalance(S.data, S.cfg, b.rows), la = TT.loadBalance(S.data, S.cfg, a.rows);
+    $("#compare").innerHTML = `<tr><th>ตัวชี้วัด</th><th>วิธีพื้นฐาน<br><small>ลำดับตามไฟล์ วางช่องแรกที่ว่าง</small></th><th>ระบบ AI<br><small>Heuristic + seed + ซ่อม + ปรับปรุงการกระจายภาระ</small></th></tr>` +
       row("คาบที่จัดไม่ลง", b.unplacedHours, a.unplacedHours, a.unplacedHours < b.unplacedHours) +
       row("ตอนเรียนที่ได้คาบไม่ครบ", b.v.missing, a.v.missing, a.v.missing < b.v.missing) +
       row("จุดที่ขัดแย้ง", b.v.conflicts, a.v.conflicts, a.v.conflicts <= b.v.conflicts) +
       row("เงื่อนไขที่ผ่าน", `${b.v.passed}/${b.v.total}`, `${a.v.passed}/${a.v.total}`, a.v.passed > b.v.passed) +
+      row("คาบสูงสุดต่อวันของกลุ่มเรียน", lb.maxGroupDay, la.maxGroupDay, la.maxGroupDay < lb.maxGroupDay) +
+      row(`วันที่กลุ่มเรียนเกิน ${la.maxGroupPerDay} คาบ`, lb.groupDaysOver, la.groupDaysOver, la.groupDaysOver < lb.groupDaysOver) +
+      row("คาบสูงสุดต่อวันของผู้สอน", lb.maxTeacherDay, la.maxTeacherDay, la.maxTeacherDay < lb.maxTeacherDay) +
+      row(`วันที่ผู้สอนสอนเกิน ${la.maxTeacherPerDay} คาบ`, lb.teacherDaysOver, la.teacherDaysOver, la.teacherDaysOver < lb.teacherDaysOver) +
       row("คะแนนโทษ (กระจายภาระ ยิ่งน้อยยิ่งดี)", "-", a.penalty, true) +
       row("เวลา (ms)", b.ms.toFixed(0), `${a.ms.toFixed(0)} (${a.rounds} รอบ)`, false);
     $("#logBox").textContent = [`seed ที่ได้ผลดีที่สุด: ${a.seed}`, `greedy รอบแรกค้าง ${a.greedyUnplaced} รายการ → ซ่อม ${a.log.length} ครั้ง`,
@@ -1640,6 +1732,9 @@ window.__startApp = function () {
       <div class="card"><b>${(tl.reduce((a, x) => a + x[1], 0) / tl.filter(x => x[1]).length).toFixed(1)}</b><span>ภาระสอนเฉลี่ย (คาบ/คน)</span></div>
       <div class="card"><b>${rooms.length}</b><span>ห้อง/สนามที่ใช้</span></div>
       <div class="card"><b>${(totalUse / (rooms.length * st.freeSlots) * 100).toFixed(0)}%</b><span>อัตราใช้ห้องเฉลี่ย (เฉพาะที่ใช้)</span></div></div>
+      <h3>การกระจายคาบเรียนรายวันของกลุ่มเรียน (เพดาน ${st.maxGroupPerDay} คาบ/วัน)</h3>
+      <table class="list"><tr><th>กลุ่ม</th>${S.cfg.days.map(d => `<th>${esc(d)}</th>`).join("")}<th>สูงสุด</th></tr>${Object.keys(st.groupDays).sort().map(g =>
+        `<tr><td>${esc(g)}</td>${st.groupDays[g].map(n => `<td class="${n > st.maxGroupPerDay ? "bad" : ""}">${n}</td>`).join("")}<td>${Math.max(...st.groupDays[g])}</td></tr>`).join("")}</table>
       <h3>ภาระสอนของผู้สอน (นับวิชาสอนร่วมให้ทุกคน)</h3>
       <table class="list"><tr><th>ผู้สอน</th><th>บทบาท</th><th>คาบ/สัปดาห์</th><th></th></tr>${tl.map(([t, n]) =>
         `<tr><td>${esc(t.name)}</td><td>${t.role === "Manager" ? "ผู้บริหาร" : "อาจารย์"}</td><td>${n}</td><td><div class="hbar" style="width:${n / maxT * 100}%"></div></td></tr>`).join("")}</table>
@@ -1887,9 +1982,9 @@ window.__startApp = function () {
   // ---------- 4) หลักฐานเชิงตัวเลข ----------
   const METHODS = [
     { id: "base", name: "วิธีพื้นฐาน", desc: "ลำดับตามไฟล์ วางช่องแรกที่ว่าง", color: "#94a3b8", fixed: true },
-    { id: "rand", name: "Greedy สุ่มลำดับ", desc: "สุ่มลำดับ เลือกช่องโทษน้อยสุด ไม่ซ่อม", color: "#f59e0b", opts: { ordered: false, shuffle: true, repair: false } },
-    { id: "heur", name: "Heuristic ยาก→ง่าย", desc: "เรียงยากไปง่าย ไม่ซ่อม", color: "#3b82f6", opts: { repair: false } },
-    { id: "full", name: "ระบบเต็ม (Plan-Act-Check)", desc: "Heuristic + ซ่อม + หลาย seed", color: "#16a34a", opts: {} }
+    { id: "rand", name: "Greedy สุ่มลำดับ", desc: "สุ่มลำดับ เลือกช่องโทษน้อยสุด ไม่ซ่อม", color: "#f59e0b", opts: { ordered: false, shuffle: true, repair: false, improve: false } },
+    { id: "heur", name: "Heuristic ยาก→ง่าย", desc: "เรียงยากไปง่าย ไม่ซ่อม", color: "#3b82f6", opts: { repair: false, improve: false } },
+    { id: "full", name: "ระบบเต็ม (Plan-Act-Check)", desc: "Heuristic + ซ่อม + ปรับปรุงการกระจายภาระ + หลาย seed", color: "#16a34a", opts: {} }
   ];
   function barChart(rows, key, fmt, max) {
     const W = 560, rowH = 38, L = 190;

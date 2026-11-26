@@ -102,6 +102,7 @@ table.list tr:last-child td { border-bottom: 0; }
 table.list tr:hover td { background: #f8faff; }
 table.list tr.sel td { background: #eaf1ff; }
 td.good { color: var(--ok); font-weight: 700; }
+td.bad { color: var(--err, #dc2626); font-weight: 700; }
 .two { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
 .two > div:first-child { width: 260px; } .grow { flex: 1; min-width: 320px; }
 .scroll { max-height: 520px; overflow: auto; border-radius: 10px; }

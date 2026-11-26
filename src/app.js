@@ -38,7 +38,8 @@
   function loadCfg() {
     let saved = null;
     try { saved = localStorage.getItem("tt_cfg"); } catch (e) { /* ignore */ }
-    S.cfg = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(TT.DEFAULT_CONFIG));
+    // รวมค่าเริ่มต้นเข้าไปด้วย เพื่อให้ค่าใหม่ (เช่น maxGroupPerDay) โผล่ในหน้าตั้งค่าแม้เคยบันทึกค่าเก่าไว้
+    S.cfg = Object.assign(JSON.parse(JSON.stringify(TT.DEFAULT_CONFIG)), saved ? JSON.parse(saved) : {});
     $("#cfg").value = JSON.stringify(S.cfg, null, 2);
   }
   $("#cfgApply").onclick = () => {
@@ -194,11 +195,16 @@
     const b = S.baseline, a = S.current;
     if (!b || !a) return;
     const row = (k, x, y, better) => `<tr><td>${k}</td><td>${x}</td><td class="${better ? "good" : ""}">${y}</td></tr>`;
-    $("#compare").innerHTML = `<tr><th>ตัวชี้วัด</th><th>วิธีพื้นฐาน<br><small>ลำดับตามไฟล์ วางช่องแรกที่ว่าง</small></th><th>ระบบ AI<br><small>Heuristic + seed + ซ่อม</small></th></tr>` +
+    const lb = TT.loadBalance(S.data, S.cfg, b.rows), la = TT.loadBalance(S.data, S.cfg, a.rows);
+    $("#compare").innerHTML = `<tr><th>ตัวชี้วัด</th><th>วิธีพื้นฐาน<br><small>ลำดับตามไฟล์ วางช่องแรกที่ว่าง</small></th><th>ระบบ AI<br><small>Heuristic + seed + ซ่อม + ปรับปรุงการกระจายภาระ</small></th></tr>` +
       row("คาบที่จัดไม่ลง", b.unplacedHours, a.unplacedHours, a.unplacedHours < b.unplacedHours) +
       row("ตอนเรียนที่ได้คาบไม่ครบ", b.v.missing, a.v.missing, a.v.missing < b.v.missing) +
       row("จุดที่ขัดแย้ง", b.v.conflicts, a.v.conflicts, a.v.conflicts <= b.v.conflicts) +
       row("เงื่อนไขที่ผ่าน", `${b.v.passed}/${b.v.total}`, `${a.v.passed}/${a.v.total}`, a.v.passed > b.v.passed) +
+      row("คาบสูงสุดต่อวันของกลุ่มเรียน", lb.maxGroupDay, la.maxGroupDay, la.maxGroupDay < lb.maxGroupDay) +
+      row(`วันที่กลุ่มเรียนเกิน ${la.maxGroupPerDay} คาบ`, lb.groupDaysOver, la.groupDaysOver, la.groupDaysOver < lb.groupDaysOver) +
+      row("คาบสูงสุดต่อวันของผู้สอน", lb.maxTeacherDay, la.maxTeacherDay, la.maxTeacherDay < lb.maxTeacherDay) +
+      row(`วันที่ผู้สอนสอนเกิน ${la.maxTeacherPerDay} คาบ`, lb.teacherDaysOver, la.teacherDaysOver, la.teacherDaysOver < lb.teacherDaysOver) +
       row("คะแนนโทษ (กระจายภาระ ยิ่งน้อยยิ่งดี)", "-", a.penalty, true) +
       row("เวลา (ms)", b.ms.toFixed(0), `${a.ms.toFixed(0)} (${a.rounds} รอบ)`, false);
     $("#logBox").textContent = [`seed ที่ได้ผลดีที่สุด: ${a.seed}`, `greedy รอบแรกค้าง ${a.greedyUnplaced} รายการ → ซ่อม ${a.log.length} ครั้ง`,
@@ -369,6 +375,9 @@
       <div class="card"><b>${(tl.reduce((a, x) => a + x[1], 0) / tl.filter(x => x[1]).length).toFixed(1)}</b><span>ภาระสอนเฉลี่ย (คาบ/คน)</span></div>
       <div class="card"><b>${rooms.length}</b><span>ห้อง/สนามที่ใช้</span></div>
       <div class="card"><b>${(totalUse / (rooms.length * st.freeSlots) * 100).toFixed(0)}%</b><span>อัตราใช้ห้องเฉลี่ย (เฉพาะที่ใช้)</span></div></div>
+      <h3>การกระจายคาบเรียนรายวันของกลุ่มเรียน (เพดาน ${st.maxGroupPerDay} คาบ/วัน)</h3>
+      <table class="list"><tr><th>กลุ่ม</th>${S.cfg.days.map(d => `<th>${esc(d)}</th>`).join("")}<th>สูงสุด</th></tr>${Object.keys(st.groupDays).sort().map(g =>
+        `<tr><td>${esc(g)}</td>${st.groupDays[g].map(n => `<td class="${n > st.maxGroupPerDay ? "bad" : ""}">${n}</td>`).join("")}<td>${Math.max(...st.groupDays[g])}</td></tr>`).join("")}</table>
       <h3>ภาระสอนของผู้สอน (นับวิชาสอนร่วมให้ทุกคน)</h3>
       <table class="list"><tr><th>ผู้สอน</th><th>บทบาท</th><th>คาบ/สัปดาห์</th><th></th></tr>${tl.map(([t, n]) =>
         `<tr><td>${esc(t.name)}</td><td>${t.role === "Manager" ? "ผู้บริหาร" : "อาจารย์"}</td><td>${n}</td><td><div class="hbar" style="width:${n / maxT * 100}%"></div></td></tr>`).join("")}</table>

@@ -237,9 +237,9 @@
   // ---------- 4) หลักฐานเชิงตัวเลข ----------
   const METHODS = [
     { id: "base", name: "วิธีพื้นฐาน", desc: "ลำดับตามไฟล์ วางช่องแรกที่ว่าง", color: "#94a3b8", fixed: true },
-    { id: "rand", name: "Greedy สุ่มลำดับ", desc: "สุ่มลำดับ เลือกช่องโทษน้อยสุด ไม่ซ่อม", color: "#f59e0b", opts: { ordered: false, shuffle: true, repair: false } },
-    { id: "heur", name: "Heuristic ยาก→ง่าย", desc: "เรียงยากไปง่าย ไม่ซ่อม", color: "#3b82f6", opts: { repair: false } },
-    { id: "full", name: "ระบบเต็ม (Plan-Act-Check)", desc: "Heuristic + ซ่อม + หลาย seed", color: "#16a34a", opts: {} }
+    { id: "rand", name: "Greedy สุ่มลำดับ", desc: "สุ่มลำดับ เลือกช่องโทษน้อยสุด ไม่ซ่อม", color: "#f59e0b", opts: { ordered: false, shuffle: true, repair: false, improve: false } },
+    { id: "heur", name: "Heuristic ยาก→ง่าย", desc: "เรียงยากไปง่าย ไม่ซ่อม", color: "#3b82f6", opts: { repair: false, improve: false } },
+    { id: "full", name: "ระบบเต็ม (Plan-Act-Check)", desc: "Heuristic + ซ่อม + ปรับปรุงการกระจายภาระ + หลาย seed", color: "#16a34a", opts: {} }
   ];
   function barChart(rows, key, fmt, max) {
     const W = 560, rowH = 38, L = 190;

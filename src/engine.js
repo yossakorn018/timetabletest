@@ -62,7 +62,10 @@
     electiveCap: 20,
     electiveNeedsTheoryRoom: "lectureOnly",   // lectureOnly | always | never
     noScheduleYears: [4],                     // ปี 4 ฝึกสอนทั้งภาค ไม่จัดคาบ
-    allowSplit: true                          // วิชาทฤษฎีแบ่งเป็นช่วงสั้นได้ถ้าลงบล็อกเดียวไม่ได้
+    allowSplit: true,                         // วิชาทฤษฎีแบ่งเป็นช่วงสั้นได้ถ้าลงบล็อกเดียวไม่ได้
+    maxGroupPerDay: 6,                        // soft: กลุ่มเรียนไม่ควรเรียนเกินกี่คาบต่อวัน
+    maxTeacherPerDay: 6,                      // soft: ผู้สอนไม่ควรสอนเกินกี่คาบต่อวัน
+    improvePasses: 3                          // จำนวนรอบปรับปรุงหลังจัดเสร็จ (0 = ปิด)
   };
 
   // ---------------- ตัวช่วย ----------------
@@ -317,7 +320,7 @@
 
   function makeState(data, cfg) {
     const tm = timeModel(data, cfg);
-    return { tm, busy: new Map(), placed: new Map(), groupDay: {} };
+    return { tm, busy: new Map(), placed: new Map(), groupDay: {}, teacherDay: {} };
   }
   const K = (type, id, slot) => type + "|" + id + "|" + slot;
 
@@ -363,6 +366,7 @@
     }
     const d = Math.floor(place.slots[0] / st.tm.P);
     task.groups.forEach(g => { st.groupDay[g + "|" + d] = (st.groupDay[g + "|" + d] || 0) + place.slots.length; });
+    task.teachers.forEach(t => { st.teacherDay[t + "|" + d] = (st.teacherDay[t + "|" + d] || 0) + place.slots.length; });
     if (st.trace) st.trace.push({ t: "place", id: task.id, groups: task.groups, slots: place.slots.slice(), kind: task.kind });
     if (!st.placed.has(task.id)) st.placed.set(task.id, []);
     st.placed.get(task.id).push(place);
@@ -380,17 +384,36 @@
       }
       const d = Math.floor(place.slots[0] / st.tm.P);
       task.groups.forEach(g => { st.groupDay[g + "|" + d] -= place.slots.length; });
+      task.teachers.forEach(t => { st.teacherDay[t + "|" + d] -= place.slots.length; });
     }
     st.placed.delete(task.id);
   }
 
-  // คะแนนโทษของช่อง (ยิ่งน้อยยิ่งดี) — soft constraint
-  function penalty(st, task, d, p0, L, usedDays, rng, jitter) {
+  // ---------------- โทษการกระจายภาระ (soft constraint) ----------------
+  // ต้นทุนของ 1 วัน ที่มี load คาบ: load² ทำให้ "วันละ 5+5" ถูกกว่า "8+2" (กระจายสม่ำเสมอ)
+  // และบวกโทษหนักเมื่อเกินเพดาน (ค่า max ตั้งได้ในหน้าตั้งค่า)
+  const OVER_W = 60;   // โทษต่อคาบที่เกินเพดานต่อวัน
+  const SPLIT_W = 8;   // โทษเล็กน้อยเมื่อแบ่งวิชาเป็นช่วง (ถ้าต้นทุนเท่ากัน เลือกเรียนรวดเดียว)
+  function dayCost(load, max) { return load * load + Math.max(0, load - max) * OVER_W; }
+  const maxG = (cfg) => cfg.maxGroupPerDay || 6, maxT = (cfg) => cfg.maxTeacherPerDay || 6;
+  // ต้นทุนรวมของทั้งตาราง (ใช้เทียบก่อน/หลังปรับปรุง)
+  function balanceCost(st, cfg) {
+    let c = 0;
+    for (const k in st.groupDay) c += dayCost(st.groupDay[k], maxG(cfg));
+    for (const k in st.teacherDay) c += dayCost(st.teacherDay[k], maxT(cfg)) / 2;   // ครูให้น้ำหนักครึ่งหนึ่งของนักศึกษา
+    return c;
+  }
+
+  // คะแนนโทษของช่อง (ยิ่งน้อยยิ่งดี) = ต้นทุนที่เพิ่มขึ้นถ้าวางวิชานี้ในวันนี้
+  function penalty(st, task, d, p0, L, usedDays, rng, jitter, cfg) {
     let pen = 0;
     for (const g of task.groups) {
-      const load = (st.groupDay[g + "|" + d] || 0) + L;
-      if (load > 6) pen += (load - 6) * 20;          // ไม่ให้วันเดียวเรียนหนักเกิน 6 คาบ
-      pen += load;                                    // กระจายภาระให้สม่ำเสมอ
+      const cur = st.groupDay[g + "|" + d] || 0;
+      pen += dayCost(cur + L, maxG(cfg)) - dayCost(cur, maxG(cfg));
+    }
+    for (const t of task.teachers) {
+      const cur = st.teacherDay[t + "|" + d] || 0;
+      pen += (dayCost(cur + L, maxT(cfg)) - dayCost(cur, maxT(cfg))) / 2;
     }
     if (usedDays.has(d)) pen += 40;                   // วิชาที่ถูกแบ่ง ไม่ควรอยู่วันเดียวกัน
     if (task.kind === "theory" && p0 + L - 1 >= st.tm.P) pen += 3;  // เลี่ยงทฤษฎีคาบสุดท้าย
@@ -409,7 +432,8 @@
   }
 
   function tryTask(st, cfg, task, rng, opts) {
-    for (const plan of chunkPlans(task, cfg)) {
+    const plans = chunkPlans(task, cfg);
+    for (const plan of (opts.onlyPlan !== undefined ? [plans[opts.onlyPlan]].filter(Boolean) : plans)) {
       const usedDays = new Set();
       let ok = true;
       for (let ci = 0; ci < plan.length; ci++) {
@@ -420,7 +444,7 @@
           const pl = canPlace(st, cfg, task, d, p, L, rng);
           if (!pl) continue;
           if (opts.firstFit) { best = { pl, d, pen: 0 }; break; }
-          const pen = penalty(st, task, d, p, L, usedDays, rng, opts.jitter);
+          const pen = penalty(st, task, d, p, L, usedDays, rng, opts.jitter, cfg);
           if (!best || pen < best.pen) best = { pl, d, pen };
           if (best && opts.firstFit) break;
         }
@@ -496,6 +520,46 @@
     return unplaced;
   }
 
+  // ปรับปรุง (local search): หยิบวิชาออกทีละวิชา แล้ววางใหม่ในช่องที่โทษน้อยสุด
+  // รับผลใหม่เฉพาะเมื่อต้นทุนการกระจายภาระลดลง ไม่งั้นคืนที่เดิม -> ไม่มีทางแย่ลง และไม่ทำให้ชน
+  function improve(st, cfg, tasks, rng, opts, log) {
+    const passes = opts.improvePasses !== undefined ? opts.improvePasses : (cfg.improvePasses !== undefined ? cfg.improvePasses : 3);
+    const before = balanceCost(st, cfg);
+    let moves = 0;
+    const tr0 = st.trace; st.trace = null;
+    for (let pass = 0; pass < passes; pass++) {
+      const order = tasks.filter(t => st.placed.has(t.id));
+      for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+      let movedThisPass = 0;
+      for (const task of order) {
+        const old = st.placed.get(task.id), oldSplit = task.splitUsed;
+        const score = () => balanceCost(st, cfg) + (task.splitUsed ? SPLIT_W : 0);
+        const c0 = score();
+        release(st, task);
+        // ลองทุกแบบการแบ่งช่วง (เช่น 4 คาบรวด / 2+2 คนละวัน) แล้วเก็บแบบที่ต้นทุนต่ำสุด
+        let best = null;
+        const nPlans = opts.noSplit ? 1 : chunkPlans(task, cfg).length;
+        for (let pi = 0; pi < nPlans; pi++) {
+          if (!tryTask(st, cfg, task, rng, Object.assign({}, opts, { jitter: 0, onlyPlan: pi }))) continue;
+          const c = score();
+          if (!best || c < best.c) best = { c, pls: st.placed.get(task.id).slice(), split: task.splitUsed };
+          release(st, task);
+        }
+        if (best && best.c < c0 - 1e-9) {
+          best.pls.forEach((pl, ci) => occupy(st, task, pl, ci)); task.splitUsed = best.split;
+          moves++; movedThisPass++; continue;
+        }
+        old.forEach((pl, ci) => occupy(st, task, pl, ci));
+        task.splitUsed = oldSplit;
+      }
+      if (!movedThisPass) break;
+    }
+    st.trace = tr0;
+    const after = balanceCost(st, cfg);
+    log.push(`ปรับปรุงการกระจายภาระ: ย้าย ${moves} ครั้ง ต้นทุน ${Math.round(before)} → ${Math.round(after)}`);
+    return { before: Math.round(before), after: Math.round(after), moves };
+  }
+
   function buildOutput(st, data, cfg, tasks) {
     const rows = [];
     const { P } = st.tm;
@@ -523,7 +587,7 @@
 
   // แก้ปัญหา 1 รอบด้วย seed หนึ่ง
   TT.solveOnce = function (data, cfg, seed, opts) {
-    opts = Object.assign({ jitter: 8, repairIters: 400, firstFit: false, noSplit: false, ordered: true, repair: true }, opts || {});
+    opts = Object.assign({ jitter: 8, repairIters: 400, firstFit: false, noSplit: false, ordered: true, repair: true, improve: true }, opts || {});
     const rng = TT.mulberry32(seed >>> 0);
     const st = makeState(data, cfg);
     st.trace = opts.trace ? [] : null;
@@ -544,16 +608,17 @@
     if (st.trace && unplaced.length) st.trace.push({ t: "check", unplaced: unplaced.map(t => t.id) });
     const greedyUnplaced = unplaced.length;
     if (opts.repair && unplaced.length) unplaced = repair(st, cfg, tasks, unplaced, rng, opts, log);
+    const imp = opts.improve ? improve(st, cfg, tasks, rng, opts, log) : null;
     const rows = buildOutput(st, data, cfg, tasks);
     const unplacedHours = unplaced.reduce((a, t) => a + t.hours * t.sections.length, 0);
     return { seed, rows, unplaced: unplaced.map(t => ({ id: t.id, label: t.label, hours: t.hours })), unplacedHours,
-      penalty: Math.round(st.penalty || 0), greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log,
+      penalty: Math.round(balanceCost(st, cfg)), improve: imp, greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log,
       trace: st.trace, meta: Object.fromEntries(tasks.map(t => [t.id, { label: t.label, kind: t.kind, hours: t.hours }])) };
   };
 
   // วิธีพื้นฐาน (baseline): ลำดับตามไฟล์ วางช่องแรกที่ว่าง ไม่แบ่ง ไม่ซ่อม
   TT.solveBaseline = function (data, cfg) {
-    return TT.solveOnce(data, cfg, 1, { ordered: false, firstFit: true, repair: false, noSplit: true, jitter: 0 });
+    return TT.solveOnce(data, cfg, 1, { ordered: false, firstFit: true, repair: false, improve: false, noSplit: true, jitter: 0 });
   };
 
   // ---------------- 4) ตัวตรวจผล ----------------
@@ -661,7 +726,27 @@
       r.teachers.forEach(t => { const k = t + "|" + r.slot; if (!seenT.has(k)) { seenT.add(k); teacherLoad[t] = (teacherLoad[t] || 0) + 1; } });
       r.rooms.forEach(x => { const k = x + "|" + r.slot; if (!seenR.has(k)) { seenR.add(k); roomUse[x] = (roomUse[x] || 0) + 1; } });
     });
-    return { teacherLoad, roomUse, freeSlots: tm.free };
+    return Object.assign({ teacherLoad, roomUse, freeSlots: tm.free }, TT.loadBalance(data, cfg, rows));
+  };
+
+  // ตัวชี้วัดการกระจายภาระรายวัน (คำนวณจากผลลัพธ์ ใช้ได้กับทุกวิธี รวมถึง baseline)
+  TT.loadBalance = function (data, cfg, rows) {
+    const P = cfg.periods;
+    const gd = {}, td = {}, seen = new Set();
+    rows.forEach(r => {
+      const d = Math.floor(r.slot / P);
+      r.groups.forEach(g => { const k = "G" + g + "|" + r.slot; if (!seen.has(k)) { seen.add(k); gd[g + "|" + d] = (gd[g + "|" + d] || 0) + 1; } });
+      r.teachers.forEach(t => { const k = "T" + t + "|" + r.slot; if (!seen.has(k)) { seen.add(k); td[t + "|" + d] = (td[t + "|" + d] || 0) + 1; } });
+    });
+    const gv = Object.values(gd), tv = Object.values(td);
+    const mg = cfg.maxGroupPerDay || 6, mt = cfg.maxTeacherPerDay || 6;
+    const groupDays = {};
+    for (const k in gd) { const [g, d] = k.split("|"); (groupDays[g] = groupDays[g] || Array(cfg.days.length).fill(0))[+d] = gd[k]; }
+    return {
+      maxGroupDay: Math.max(0, ...gv), maxTeacherDay: Math.max(0, ...tv),
+      groupDaysOver: gv.filter(v => v > mg).length, teacherDaysOver: tv.filter(v => v > mt).length,
+      groupDays, maxGroupPerDay: mg, maxTeacherPerDay: mt
+    };
   };
 
   if (typeof module !== "undefined") module.exports = TT; else window.TT = TT;
