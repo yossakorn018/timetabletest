@@ -345,11 +345,13 @@
     }
     const d = Math.floor(place.slots[0] / st.tm.P);
     task.groups.forEach(g => { st.groupDay[g + "|" + d] = (st.groupDay[g + "|" + d] || 0) + place.slots.length; });
+    if (st.trace) st.trace.push({ t: "place", id: task.id, groups: task.groups, slots: place.slots.slice(), kind: task.kind });
     if (!st.placed.has(task.id)) st.placed.set(task.id, []);
     st.placed.get(task.id).push(place);
   }
   function release(st, task) {
     const ps = st.placed.get(task.id) || [];
+    if (st.trace && ps.length) st.trace.push({ t: "remove", id: task.id, groups: task.groups, slots: ps.flatMap(p => p.slots) });
     for (const place of ps) {
       for (const s of place.slots) {
         task.groups.forEach(g => st.busy.delete(K("G", g, s)));
@@ -449,9 +451,15 @@
       for (const c of cands.slice(0, 8)) {
         const evicted = [...c.conflict].map(id => byId[id]);
         const saved = evicted.map(t => [t, st.placed.get(t.id)]);
+        const tr0 = st.trace; st.trace = null;
         evicted.forEach(t => release(st, t));
+        st.trace = tr0;
         const pl = canPlace(st, cfg, task, c.d, c.p, L, rng);
         if (pl) {
+          if (st.trace) {
+            st.trace.push({ t: "repair", id: task.id, evicted: evicted.map(t => t.id) });
+            for (const [t, ps] of saved) st.trace.push({ t: "remove", id: t.id, groups: t.groups, slots: ps.flatMap(p => p.slots) });
+          }
           occupy(st, task, pl, 0);
           evicted.forEach(t => { kicked[t.id] = (kicked[t.id] || 0) + 1; });
           for (const t of evicted) if (!tryTask(st, cfg, t, rng, opts)) unplaced.push(t);
@@ -459,8 +467,10 @@
           done = true;
           break;
         }
-        // คืนสภาพ
+        // คืนสภาพ (ไม่บันทึกลง trace)
+        const tr = st.trace; st.trace = null;
         for (const [t, ps] of saved) for (const pl2 of ps) occupy(st, t, pl2, 0);
+        st.trace = tr;
       }
       if (!done) unplaced.push(task);
     }
@@ -497,6 +507,7 @@
     opts = Object.assign({ jitter: 8, repairIters: 400, firstFit: false, noSplit: false, ordered: true, repair: true }, opts || {});
     const rng = TT.mulberry32(seed >>> 0);
     const st = makeState(data, cfg);
+    st.trace = opts.trace ? [] : null;
     st.homeByYear = {};
     data.groups.forEach(g => (st.homeByYear[g.year] = st.homeByYear[g.year] || []).push(g.home));
     const tasks = buildTasks(data);
@@ -504,16 +515,21 @@
     if (opts.ordered) {
       const key = new Map(order.map(t => [t.id, t.difficulty + rng() * 30]));
       order.sort((a, b) => key.get(b.id) - key.get(a.id));
+    } else if (opts.shuffle) {
+      for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     }
+    if (st.trace) st.trace.push({ t: "plan", order: order.map(t => t.id) });
     const log = [];
     let unplaced = [];
-    for (const t of order) if (!tryTask(st, cfg, t, rng, opts)) unplaced.push(t);
+    for (const t of order) if (!tryTask(st, cfg, t, rng, opts)) { unplaced.push(t); if (st.trace) st.trace.push({ t: "fail", id: t.id, groups: t.groups }); }
+    if (st.trace && unplaced.length) st.trace.push({ t: "check", unplaced: unplaced.map(t => t.id) });
     const greedyUnplaced = unplaced.length;
     if (opts.repair && unplaced.length) unplaced = repair(st, cfg, tasks, unplaced, rng, opts, log);
     const rows = buildOutput(st, data, cfg, tasks);
     const unplacedHours = unplaced.reduce((a, t) => a + t.hours * t.sections.length, 0);
     return { seed, rows, unplaced: unplaced.map(t => ({ id: t.id, label: t.label, hours: t.hours })), unplacedHours,
-      penalty: Math.round(st.penalty || 0), greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log };
+      penalty: Math.round(st.penalty || 0), greedyUnplaced, splits: tasks.filter(t => t.splitUsed).length, log,
+      trace: st.trace, meta: Object.fromEntries(tasks.map(t => [t.id, { label: t.label, kind: t.kind, hours: t.hours }])) };
   };
 
   // วิธีพื้นฐาน (baseline): ลำดับตามไฟล์ วางช่องแรกที่ว่าง ไม่แบ่ง ไม่ซ่อม
@@ -597,6 +613,24 @@
     const passed = checks.filter(c => c.pass).length;
     const conflicts = checks.slice(1).reduce((a, c) => a + c.count, 0);
     return { checks, passed, total: checks.length, conflicts, missing: checks[0].count };
+  };
+
+  // ---------------- ขยายข้อมูล k เท่า (stress test) ----------------
+  TT.scaleData = function (data, cfg, k) {
+    const c2 = JSON.parse(JSON.stringify(cfg));
+    const d2 = { teachers: [], groups: [], subjects: data.subjects, sections: [], warnings: [] };
+    c2.theoryRooms = []; c2.computerRooms = []; c2.facilities = [];
+    for (let c = 0; c < k; c++) {
+      const sx = c ? "#" + (c + 1) : "";
+      data.teachers.forEach(t => d2.teachers.push(Object.assign({}, t, { id: t.id + sx, name: t.name + sx })));
+      data.groups.forEach(g => d2.groups.push(Object.assign({}, g, { id: g.id + sx, home: g.home + sx })));
+      cfg.theoryRooms.forEach(r => c2.theoryRooms.push(r + sx));
+      cfg.computerRooms.forEach(r => c2.computerRooms.push(Object.assign({}, r, { id: r.id + sx })));
+      cfg.facilities.forEach(f => c2.facilities.push(Object.assign({}, f, { id: f.id + sx })));
+      data.sections.forEach(s => d2.sections.push(Object.assign({}, s, { id: s.id + sx, groups: s.groups.map(g => g + sx),
+        teachers: s.teachers.map(t => t + sx), rooms: s.rooms.map(r => r + sx), set: s.set ? s.set + sx : null })));
+    }
+    return { data: d2, cfg: c2 };
   };
 
   // ---------------- สถิติ ----------------

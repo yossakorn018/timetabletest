@@ -23,5 +23,6 @@
 
 - `src/engine.js` แปลงไฟล์ ตรวจข้อมูล จัดตาราง (Greedy + Heuristic + seed + ซ่อมแบบ plan-act-check) และตรวจผล
 - `src/app.js`, `src/body.html`, `src/app.css` หน้าจอ
+- `src/features.js` แอนิเมชัน AI (Plan-Act-Repair-Check), ลากย้ายวิชาพร้อมตรวจเงื่อนไข, หลักฐานเชิงตัวเลข (ablation 4 วิธี + stress test), QR Code และหน้ามือถือ
 - `src/build.py` รวมเป็น `index.html` (`python build.py data.xlsx` จะสร้าง `index_with_data.html` ด้วย)
 - `src/test.js` ทดสอบ engine ด้วย Node.js

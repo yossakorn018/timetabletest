@@ -24,7 +24,7 @@
     setTimeout(() => sp.remove(), 600);
   });
   function markDone() {
-    const done = { import: !!S.data, solve: !!S.current, check: !!(S.current && S.current.v.passed === S.current.v.total), view: !!S.current, report: !!S.current };
+    const done = { bench: !!S.benchDone, import: !!S.data, solve: !!S.current, check: !!(S.current && S.current.v.passed === S.current.v.total), view: !!S.current, report: !!S.current };
     document.querySelectorAll("nav button").forEach(b => b.classList.toggle("done", !!done[b.dataset.tab]));
   }
   function toast(msg, kind) {
@@ -233,15 +233,15 @@
       h += `<tr><th>${day}</th>`;
       for (let p = 1; p <= P;) {
         const s = d * P + p - 1;
-        if (tm.locked[s] !== undefined) { h += `<td class="locked">${esc(tm.locked[s])}</td>`; p++; continue; }
+        if (tm.locked[s] !== undefined) { h += `<td class="locked" data-slot="${s}">${esc(tm.locked[s])}</td>`; p++; continue; }
         const rs = bySlot[s];
         if (!rs) {
           const un = type === "teacher" && tm.unav[id] && tm.unav[id].has(s);
-          h += `<td class="${un ? "unav" : ""}">${un ? "ประชุม" : ""}</td>`; p++; continue;
+          h += `<td class="${un ? "unav" : ""}" data-slot="${s}">${un ? "ประชุม" : ""}</td>`; p++; continue;
         }
         let span = 1;
         while (p + span <= P && keyOf(bySlot[s + span]) === keyOf(rs) && tm.locked[s + span] === undefined) span++;
-        h += `<td colspan="${span}" class="cell k-${rs[0].kind}">${cellText(type, rs)}</td>`;
+        h += `<td colspan="${span}" class="cell k-${rs[0].kind}" data-slot="${s}" data-len="${span}" data-key="${esc(keyOf(rs))}">${cellText(type, rs)}</td>`;
         p += span;
       }
       h += "</tr>";
@@ -256,6 +256,7 @@
     const opt = $("#vEntity").selectedOptions[0];
     $("#gridTitle").textContent = `ตาราง${{ group: "เรียน", teacher: "สอน", room: "การใช้พื้นที่" }[type]}: ${opt ? opt.textContent : id}`;
     $("#gridBox").innerHTML = gridHTML(type, id);
+    S.attachDnD();
     $("#printWho").textContent = $("#gridTitle").textContent;
     $("#printInfo").textContent = `seed ${S.current.seed} · ผ่าน ${S.current.v.passed}/${S.current.v.total} เงื่อนไข · พิมพ์ ${new Date().toLocaleString("th-TH")}`;
   }
@@ -320,6 +321,7 @@
         `<tr><td>${esc(r)}</td><td>${n}</td><td>${(n / st.freeSlots * 100).toFixed(0)}%</td><td><div class="hbar" style="width:${n / st.freeSlots * 100}%"></div></td></tr>`).join("")}</table>`;
   }
 
+/*FEATURES*/
   // ---------- ไฟล์แม่แบบ ----------
   $("#tplBtn").onclick = () => {
     if (typeof XLSX === "undefined") return toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err");
@@ -336,6 +338,8 @@
   // ---------- เริ่มต้น ----------
   loadCfg();
   showTab("import");
+  const params = new URLSearchParams(location.search);
+  if (window.EMBED && params.get("m") === "1") { S.renderMobile(params); return; }
   // ไฟล์ฉบับฝังข้อมูล: โหลดข้อมูล -> บันทึก -> จัดตารางอัตโนมัติ
   if (window.EMBED) {
     S.sheets = window.EMBED.sheets;
