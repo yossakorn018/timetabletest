@@ -30,6 +30,9 @@
 - `src/features.js` แอนิเมชัน AI (Plan-Act-Repair-Check), ลากย้ายวิชาพร้อมตรวจเงื่อนไข, หลักฐานเชิงตัวเลข (ablation 4 วิธี + stress test), QR Code และหน้ามือถือ
 - `src/build.py` รวมเป็น `index.html` (`python build.py data.xlsx` จะสร้าง `index_with_data.html` ด้วย)
 - `src/test.js` ทดสอบ engine ด้วย Node.js
+- `src/check_independent.js` ตัวตรวจอิสระ: อ่าน Excel และกฎจากคำชี้แจงเอง ไม่ใช้ตัวตรวจของ engine ตรวจ 13 ข้อ
+  แสดงว่าจับผิดวิธีพื้นฐานได้, ทดสอบตัวเองด้วยการแกล้งใส่ข้อผิดพลาด, แล้วตรวจระบบจริง 50 seed
+  รัน: `cd src && node check_independent.js` (ถ้าเปลี่ยนไฟล์ Excel ให้รัน `python dump_sheets.py ไฟล์.xlsx` ก่อน)
 
 ## บัญชีเริ่มต้น
 
