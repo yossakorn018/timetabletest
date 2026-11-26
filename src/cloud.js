@@ -10,7 +10,8 @@
   const KEYS = ["tt_users", "tt_sched", "tt_requests", "tt_cfg", "tt_demo_v1"];
   const on = !!(CFG.url && CFG.key);
   const C = window.CLOUD = { on, status: on ? "connecting" : "local", lastSync: null, pending: {}, applying: false };
-  const H = on ? { apikey: CFG.key, Authorization: "Bearer " + CFG.key } : {};
+  // key แบบใหม่ (sb_publishable_...) ใส่แค่ apikey · key แบบเก่า (JWT eyJ...) ใส่ Authorization ด้วย
+  const H = !on ? {} : /^sb_/.test(CFG.key) ? { apikey: CFG.key } : { apikey: CFG.key, Authorization: "Bearer " + CFG.key };
   const base = on ? CFG.url.replace(/\/$/, "") + "/rest/v1/app_state" : "";
   const rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem;
   const ls = window.localStorage;
