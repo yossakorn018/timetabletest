@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบจัดตารางเรียน-สอนอัตโนมัติ คณะศึกษาศาสตร์</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>/*CSS*/</style>
+</head>
+<body>
+<header>
+  <h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
+  <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
+</header>
+<nav>
+  <button data-tab="import">1. นำเข้าข้อมูล</button>
+  <button data-tab="solve">2. จัดตาราง</button>
+  <button data-tab="check">3. ตรวจผล</button>
+  <button data-tab="view">4. ดูตาราง/ส่งออก</button>
+  <button data-tab="report">5. รายงาน</button>
+</nav>
+<main>
+<section class="tab" id="import">
+  <h2>นำเข้าไฟล์รายวิชา (Excel)</h2>
+  <p class="muted">รองรับไฟล์ .xlsx/.xls ที่แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
+  <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
+  <button id="tplBtn" class="ghost">ดาวน์โหลดไฟล์แม่แบบ</button>
+  <span id="fileName" class="muted"></span>
+  <details>
+    <summary>ตั้งค่าเงื่อนไขจากคำชี้แจง (กลุ่ม ห้อง สนาม เวลา ผู้บริหาร)</summary>
+    <p class="muted">แก้เป็น JSON ได้ทุกค่า ระบบไม่ได้เขียนข้อมูลตายตัวในโค้ด</p>
+    <textarea id="cfg" spellcheck="false"></textarea>
+    <button id="cfgApply">บันทึกการตั้งค่า</button> <button id="cfgReset" class="ghost">คืนค่าเริ่มต้น</button>
+  </details>
+  <div id="preview" hidden>
+    <h3>สรุปข้อมูล</h3>
+    <div class="cards" id="sumCards"></div>
+    <h3>ผลตรวจข้อมูลก่อนคำนวณ</h3>
+    <ul class="issues" id="issues"></ul>
+    <div class="two">
+      <div><h3>ชั่วโมงเรียนต่อกลุ่ม</h3><table class="list" id="gh"></table></div>
+      <div class="grow"><h3>ตอนเรียนที่ต้องจัด <input id="secSearch" placeholder="ค้นหา รหัส/วิชา/ครู/กลุ่ม"></h3>
+        <div class="scroll"><table class="list" id="secTable"></table></div></div>
+    </div>
+    <button id="saveData" class="primary">ยืนยันและบันทึกข้อมูล →</button>
+  </div>
+</section>
+
+<section class="tab" id="solve" hidden>
+  <h2>จัดตารางอัตโนมัติ</h2>
+  <ul class="issues" id="issues2"></ul>
+  <div class="row">
+    <label>Seed <input type="number" id="seed" value="42"></label>
+    <button id="randSeed" class="ghost">สุ่ม seed</button>
+    <label>จำนวนรอบ <input type="number" id="rounds" value="30" min="1"></label>
+    <button id="runBtn" class="primary" disabled>▶ เริ่มจัดตาราง</button>
+    <button id="cancelBtn" disabled>■ ยกเลิก</button>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <p id="status" class="muted">นำเข้าข้อมูลก่อน แล้วกดเริ่มจัดตาราง</p>
+  <details class="how"><summary>หลักการทำงานของอัลกอริทึม</summary>
+    <ol>
+      <li><b>Plan:</b> รวมวิชาเลือกในชุดเดียวกันเป็นบล็อกเดียว แล้วเรียงงานจากยากไปง่าย (วิชาเลือก → เรียนรวมทั้งชั้นปี → สอนร่วม 2 คน → ทักษะกีฬาที่ใช้สนาม → ห้องคอม → ทฤษฎี) โดยสุ่มลำดับเล็กน้อยด้วย seed</li>
+      <li><b>Act:</b> แต่ละบล็อก ตัดช่องที่ผิดข้อห้ามเด็ดขาดทิ้ง (ครู/กลุ่ม/ห้อง/สนามว่าง คาบล็อก เวลาประชุม) แล้วเลือกช่องที่คะแนนโทษน้อยที่สุด (กระจายคาบไม่ให้วันใดหนักเกิน 6 คาบ)</li>
+      <li><b>Check:</b> ถ้ามีบล็อกที่วางไม่ลง ระบบซ่อมโดยหาช่องที่ชนน้อยที่สุด ย้ายตัวที่ชนออก วางบล็อกนั้น แล้วจัดตัวที่ถูกย้ายใหม่</li>
+      <li>รันหลาย seed เก็บผลดีที่สุด แล้วตรวจผลด้วยตัวตรวจอิสระ 11 ข้อ เทียบกับวิธีพื้นฐาน (ลำดับตามไฟล์ วางช่องแรกที่ว่าง)</li>
+    </ol>
+  </details>
+  <h3>เปรียบเทียบกับวิธีพื้นฐาน</h3>
+  <table class="list" id="compare"></table>
+  <pre id="logBox"></pre>
+  <h3>ประวัติการรัน (Runs)</h3>
+  <table class="list" id="runs"></table>
+</section>
+
+<section class="tab" id="check" hidden>
+  <h2>ตรวจผลตามเงื่อนไขโจทย์</h2>
+  <div class="cards" id="vSummary"></div>
+  <ul class="issues" id="vList"><li class="muted">ยังไม่มีผลการจัดตาราง</li></ul>
+</section>
+
+<section class="tab" id="view" hidden>
+  <h2>ดูตาราง</h2>
+  <div class="row noprint">
+    <select id="vType"><option value="group">ตารางเรียน (กลุ่ม)</option><option value="teacher">ตารางสอน (ผู้สอน)</option><option value="room">ตารางการใช้พื้นที่ (ห้อง/สนาม)</option></select>
+    <input id="vSearch" placeholder="ค้นหาชื่อ">
+    <select id="vEntity"></select>
+    <button id="csvBtn">ส่งออก CSV</button>
+    <button id="xlsxBtn">ส่งออก Excel (ทุกตาราง)</button>
+    <button id="printBtn">พิมพ์ / PDF</button>
+  </div>
+  <h3 id="gridTitle"></h3>
+  <div id="gridBox" class="scroll"></div>
+</section>
+
+<section class="tab" id="report" hidden>
+  <h2>รายงานภาระสอนและการใช้พื้นที่</h2>
+  <div id="reportBox"></div>
+</section>
+</main>
+<div id="toast"></div>
+<script>/*ENGINE*/</script>
+<script>/*APP*/</script>
+</body>
+</html>
