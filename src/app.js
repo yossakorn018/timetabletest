@@ -265,8 +265,7 @@
     if (type === "teacher") list = subs.filter(s => s.teachers.includes(id));
     if (!list.length) return "";
     return `<div class="fieldnote"><span>🏫</span><div><b>${type === "group" ? "ฝึกปฏิบัติการสอนในสถานศึกษาตลอดภาคเรียน — ไม่มีตารางเรียนในมหาวิทยาลัย" : "รับผิดชอบรายวิชาฝึกสอน (ไม่มีคาบสอน)"}</b>
-      ${list.map(s => `<p>${esc(s.code)} ${esc(s.name)} ${esc(s.credit)} · ผู้รับผิดชอบ: ${esc(s.teachers.map(tName).join(", "))}</p>`).join("")}
-      <small>ตามคำชี้แจงข้อ 6: นักศึกษาชั้นปีที่ 4 ฝึกปฏิบัติงานและสอนจริงในสถานศึกษา ผู้สอนมีหน้าที่รับผิดชอบรายวิชาเท่านั้น</small></div></div>`;
+      ${list.map(s => `<p>${esc(s.code)} ${esc(s.name)} ${esc(s.credit)} · ผู้รับผิดชอบ: ${esc(s.teachers.map(tName).join(", "))}</p>`).join("")}</div></div>`;
   }
   function gridHTML(type, id) {
     const tm = TT.timeModel(S.data, S.cfg), P = tm.P;
