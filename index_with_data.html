@@ -311,6 +311,13 @@ tr.editing input, tr.editing select { width: 100%; padding: 5px 8px; font-size: 
 tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
 .pwmask { letter-spacing: 1px; } .pwat { display: block; font-size: 11.5px; }
 
+.samples { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0 0; font-size: 14px; }
+a.manual { color: #fff; text-decoration: none; font-size: 13.5px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.16); white-space: nowrap; }
+a.manual:hover { background: rgba(255,255,255,.28); }
+
+.demo { font-size: 12.5px; color: var(--muted); margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.dl a { color: var(--pri); }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -381,7 +388,10 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       <p class="lgswitch">มีบัญชีแล้ว? <a href="#" data-pane="paneLogin">เข้าสู่ระบบ</a></p>
     </div>
     <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
-    <p class="muted small">บัญชีเริ่มต้น: <b>admin</b> / <b>admin1234</b></p>
+    <div class="demo"><b>บัญชีทดสอบ</b> (กดเพื่อกรอกให้)
+      <button type="button" class="small" data-demo="admin|admin1234">ผู้ดูแล admin</button>
+      <button type="button" class="small" data-demo="t01|1234">อาจารย์ t01</button>
+      <button type="button" class="small" data-demo="g1-1|1234">นักศึกษา g1-1</button></div>
   </div>
 </div>
 <header>
@@ -389,7 +399,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
     <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
   </div>
-  <div class="userbox"><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
+  <div class="userbox"><a class="manual" href="manual.html" target="_blank" title="คู่มือผู้ใช้">📘 คู่มือ</a><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
 </header>
 <nav>
   <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
@@ -403,13 +413,20 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
 <main>
 <section class="tab" id="import">
   <h2>นำเข้าไฟล์รายวิชา (Excel)</h2>
-  <p class="muted">รองรับไฟล์ .xlsx/.xls ที่แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
+  <p class="muted">รองรับ 2 รูปแบบ: <b>Excel</b> (.xlsx/.xls) และ <b>ชุดข้อมูล JSON</b> ที่ส่งออกจากระบบ · Excel แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
   <div class="drop" id="drop">
     <div class="ico">📂</div>
     <div><b>ลากไฟล์ Excel มาวางที่นี่</b><br><span id="fileName" class="muted">หรือกดปุ่มเพื่อเลือกไฟล์ (.xlsx)</span></div>
-    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
+    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls,.json"></label>
     <button id="tplBtn" class="ghost">⬇ ไฟล์แม่แบบ</button>
   </div>
+  <div class="samples"><b>หรือลองชุดข้อมูลตัวอย่าง:</b>
+    <button data-sample="small">🟢 เล็ก · ปี 1 (4 กลุ่ม)</button>
+    <button data-sample="medium">🟡 กลาง · โจทย์จริง (11 กลุ่ม)</button>
+    <button data-sample="large">🔴 ใหญ่ · ×3 วิทยาเขต (33 กลุ่ม)</button></div>
+  <p class="muted small dl">⬇ ดาวน์โหลดไฟล์ตัวอย่าง: <a href="samples/ตัวอย่าง_เล็ก_ปี1.xlsx" download>เล็ก (.xlsx)</a> ·
+    <a href="samples/ตัวอย่าง_กลาง_โจทย์จริง.xlsx" download>กลาง (.xlsx)</a> · <a href="samples/ตัวอย่าง_ใหญ่_3วิทยาเขต.json" download>ใหญ่ (.json)</a>
+    · <button id="dsExport" class="small ghost" type="button">ส่งออกชุดข้อมูลปัจจุบัน (.json)</button></p>
   <details>
     <summary>ตั้งค่าเงื่อนไขจากคำชี้แจง (กลุ่ม ห้อง สนาม เวลา ผู้บริหาร)</summary>
     <p class="muted">แก้เป็น JSON ได้ทุกค่า ระบบไม่ได้เขียนข้อมูลตายตัวในโค้ด</p>
@@ -701,7 +718,8 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
         if (code) {
           let parsed = parseCredit(credit);
           if (isEmpty(no) && parent) { parsed = parent.credit; cat = parent.cat; }
-          if (!parsed) { warnings.push({ level: "error", msg: `ปี ${year} ${code}: อ่านหน่วยกิต "${credit}" ไม่ได้`, fix: "ตรวจรูปแบบ เช่น 3(2-2-5)" }); continue; }
+          if (!parsed) { warnings.push({ level: "error", msg: `ปี ${year} ${code}: อ่านหน่วยกิต "${credit}" ไม่ได้`, fix: "ตรวจรูปแบบในคอลัมน์ D เช่น 3(2-2-5)" }); continue; }
+          if (!name) warnings.push({ level: "error", msg: `ปี ${year} รหัส ${code}: ไม่มีชื่อรายวิชา`, fix: "ใส่ชื่อรายวิชาในคอลัมน์ C ของแถวนี้" });
           current = { year, code, name, credit: parsed, cat, kindCat: catOf(cat),
             teachers: isEmpty(tname) ? [] : [teacher(tname, star)], combinedHours: null, set: null };
           if (current.kindCat === "elective") {
@@ -717,6 +735,23 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       }
     });
 
+    // ตรวจภาพรวมของไฟล์
+    if (!courses.length) warnings.push({ level: "error", msg: "ไม่พบรายวิชาในไฟล์ (ไฟล์ว่างหรือรูปแบบไม่ตรงแม่แบบ)",
+      fix: "ใช้ไฟล์ตามแม่แบบ: แยกชีตตามชั้นปี ข้อมูลเริ่มแถวที่ 3 คอลัมน์ B = รหัสวิชา, C = ชื่อวิชา, D = หน่วยกิต (กด ⬇ ไฟล์แม่แบบ)" });
+    sheets.forEach((sh, si) => {
+      const m = /(\d)/.exec(sh.name), y = m ? +m[1] : si + 1;
+      if (courses.length && !courses.some(c => c.year === y)) warnings.push({ level: "warn", msg: `ชีต "${sh.name}" ไม่มีรายวิชา`, fix: "ตรวจว่าใส่ข้อมูลในชีตนี้ครบหรือไม่ ถ้าตั้งใจเว้นไว้ ข้ามได้" });
+    });
+    const seen = {};
+    courses.forEach(c => { const k = c.year + "|" + c.code; seen[k] = (seen[k] || 0) + 1; });
+    Object.entries(seen).filter(([, n]) => n > 1).forEach(([k, n]) => {
+      const [y, code] = k.split("|");
+      warnings.push({ level: "error", msg: `รหัสวิชา ${code} ซ้ำ ${n} แถวในชั้นปีที่ ${y} (จะถูกจัดซ้ำ ${n} ครั้ง)`,
+        fix: "ลบแถวที่ซ้ำ หรือแก้รหัสให้ถูก — ถ้าเป็นผู้สอนร่วม ให้ใส่ชื่อผู้สอนคนที่ 2 ในแถวถัดไปโดยเว้นรหัสวิชาว่าง" });
+    });
+    courses.filter(c => !c.teachers.length && !cfg.noScheduleYears.includes(c.year)).forEach(c =>
+      warnings.push({ level: "error", msg: `${c.code} ${c.name || ""}: ไม่มีผู้สอน`, fix: "ใส่ชื่ออาจารย์ผู้สอนในคอลัมน์ F ของแถววิชานี้" }));
+
     // ครู
     const mgrKeys = new Set(cfg.managers.map(nameKey));
     const tlist = [...teachers.entries()].sort((a, b) => a[1].name < b[1].name ? -1 : 1);
@@ -727,7 +762,8 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       if (mgr !== t.star) warnings.push({ level: "warn", msg: `${t.name}: รายชื่อผู้บริหารในคำชี้แจงไม่ตรงกับเครื่องหมาย * ในไฟล์`, fix: "ตรวจรายชื่อผู้บริหารในการตั้งค่า" });
       return { id: tid[k], name: t.name, role: mgr ? "Manager" : "Teacher" };
     });
-    for (const k of mgrKeys) if (!teachers.has(k)) warnings.push({ level: "warn", msg: `ผู้บริหาร "${k}" ไม่มีในรายวิชา`, fix: "ตรวจการสะกดชื่อในการตั้งค่า" });
+    const missMgr = [...mgrKeys].filter(k => !teachers.has(k));
+    if (courses.length && missMgr.length) warnings.push({ level: "warn", msg: `ผู้บริหารที่ไม่พบในรายวิชา: ${missMgr.join(", ")}`, fix: "ตรวจการสะกดชื่อในการตั้งค่า (managers) — ถ้าผู้บริหารคนนั้นไม่ได้สอนเทอมนี้ ข้ามได้" });
 
     // กลุ่ม
     const groups = [];
@@ -815,7 +851,6 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
         if (!seenSet.has(s.set)) { seenSet.add(s.set); s.groups.forEach(g => gh[g] = (gh[g] || 0) + s.hours); }
       } else s.groups.forEach(g => gh[g] = (gh[g] || 0) + s.hours);
       s.teachers.forEach(t => th[t] = (th[t] || 0) + s.hours);
-      if (!s.teachers.length) out.push({ level: "error", msg: `${s.subject} ${s.name}: ไม่มีผู้สอน`, fix: "ใส่ชื่อผู้สอนในไฟล์" });
       if (s.anyComputer) {
         const size = s.groups.reduce((a, g) => a + data.groups.find(x => x.id === g).size, 0);
         if (!cfg.computerRooms.some(r => r.cap >= size)) out.push({ level: "error", msg: `${s.subject} กลุ่ม ${s.groups}: นักศึกษา ${size} คน เกินจำนวนเครื่องคอม`, fix: "เพิ่มห้องคอมหรือแบ่งกลุ่ม" });
@@ -835,7 +870,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     const sets = {};
     data.sections.filter(s => s.set).forEach(s => (sets[s.set] = sets[s.set] || []).push(s));
     for (const [id, ss] of Object.entries(sets)) {
-      const students = data.groups.filter(g => g.year === ss[0].year).reduce((a, g) => a + g.size, 0);
+      const students = ss[0].groups.reduce((a, gid) => a + (data.groups.find(g => g.id === gid) || { size: 0 }).size, 0);
       if (students > ss.length * cfg.electiveCap) out.push({ level: "error", msg: `ชุดวิชาเลือก ${id}: นักศึกษา ${students} คน แต่รับได้ ${ss.length * cfg.electiveCap}`, fix: "เพิ่มรายวิชาหรือเพิ่มจำนวนรับ" });
       const facs = ss.flatMap(s => s.rooms);
       if (new Set(facs).size !== facs.length) out.push({ level: "error", msg: `ชุดวิชาเลือก ${id}: มีสนามซ้ำกันในชุดที่ต้องเรียนพร้อมกัน`, fix: "ตรวจการจับคู่สนาม" });
@@ -978,6 +1013,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
         const L = plan[ci];
         let best = null;
         for (let d = 0; d < st.tm.D; d++) for (let p = 1; p <= st.tm.P; p++) {
+          if (plan.length > 1 && usedDays.has(d)) continue;   // วิชาที่แบ่งช่วง ต้องอยู่คนละวัน
           const pl = canPlace(st, cfg, task, d, p, L, rng);
           if (!pl) continue;
           if (opts.firstFit) { best = { pl, d, pen: 0 }; break; }
@@ -1229,6 +1265,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
 })();
 </script>
 <script>window.EMBED={"fileName": "ข้อมูลรายวิชา_ver2.xlsx", "sheets": [{"name": "ชั้นปีที่1", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 1 ", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "มศ 041017", "ภาษาไทยเพื่อการสื่อสารในศตวรรษที่ 21", "3(3-0-6)", "วิชาภาษา", "อ.ดร.ภาสกร ชาญจิราวดี", null, null], [2, "สศ 021011", "คนกีฬาสู่วิถีพลเมืองสร้างสรรค์", "3(3-0-6)", "วิชาสังคมศาสตร์และมนุษยศาสตร์", "ผศ.ดร.ปรียาณัฐ บัวทองจันทร์", null, null], [3, "กศ 051014", "จิตวิทยาสำหรับครู", "3(2-2-5)", "วิชาชีพครู", "อ.วรรณา นิ่มวุ่น", null, null], [4, "กศ 032010  ", "เทคโนโลยีดิจิทัลเพื่อพัฒนานวัตกรรมฯ              ", "3(2-2-5)", "นวัตกรรมและเทคโนโลยี", "อ.ดร.กานตินุช  สถิรมนัส", null, null], [5, "กศ 071001  ", "ปฏิบัติการวิชาชีพระหว่างเรียน 1", "1(90) ", "วิชาชีพครู", "อ.สิบเอกสุรชัย แซ่ด่าน", null, "* ผู้บริหาร"], [null, null, null, "เรียน 4 ชม.เรียนรวมทั้งชั้นปี", null, "อ.วรรณา นิ่มวุ่น", null, null], [6, "สข 001024", "กายวิภาคศาสตร์และสรีรวิทยา  ", "3(3-0-6)", "วิชาบังคับ", "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [7, "พล 051383", "ทักษะและการจัดการเรียนรู้ กีฬากระบี่กระบอง", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.สุขสวัสดิ์  แย้มศรี", null, null], [8, "พล 031519", "ทักษะและการจัดการเรียนรู้ กีฬาว่ายน้ำ", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.นฤเบศภ์  ขวัญเพชร", null, null], ["รวม 8 รายวิชา 27 คาบ", null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่2", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 2", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "วท 091010", "คณิตศาสตร์ในชีวิตประจำวัน   ", "3(2-2-5)", "คณิตศาสตร์", "อ.เฉลิมวิชญ์  กุลศิริ", null, null], [2, "พล 072166", "ลูกเสือและยุวกาชาด ", "2(1-2-3)", "วิชาบังคับ", "อ.สมพงค์  แก้วเวหา", null, null], [3, "กศ 022039  ", "การพัฒนาหลักสูตร                                       ", "3(2-2-5)", "วิชาชีพครู", "อ.สุมน  เกลาฉีด", null, null], [4, "พล 012254", "ภาษาอังกฤษสำหรับวิชาชีพพลศึกษา  ", "2(1-2-3)", "วิชาภาษา", "ผศ.ปรัศนี ช่วยการ ซอลีฮี", null, "*"], [5, "กศ 072002", "ปฏิบัติการวิชาชีพระหว่างเรียน 2", "1(90)", "วิชาชีพครู", "ผศ.ธรณัส  ปัญญาไข", null, "*"], [null, null, null, "เรียน 4 ชม.เรียนรวมทั้งชั้นปี", null, "อ.ดร.กานตินุช สถิรมนัส", null, null], [6, "พล 051381", "ทักษะและการจัดการเรียนรู้กีฬามวยไทย", "2(1-2-3)", "ทักษะและการสอนกีฬา", "อ.สุธน  เพ็ชรนิล", null, null], [7, "พล 061126", "ทักษะและการจัดการเรียนรู้ การช่วยชีวิตทางน้ำ", "2(1-2-3)", "ทักษะและการสอนกีฬา", "ผศ.กู้เกียรติ  บุญมี", null, "*"], [8, "วท 061006", "รักษ์สิ่งแวดล้อม  ", "3(3-0-6)", "วิทยาศาสตร์", "อ.ดร.รุ่งโรจน์ ไกรสิทธิพาณิชย์", null, null], [9, "พล 042262", "ทักษะกีฬาฟุตซอล", "1(0-2-1)", "ทักษะและการสอนกีฬาขั้นสูง", "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 042270", "ทักษะกีฬาแฮนด์บอล", "เลือกเรียน 1 รายวิชา ", null, "อ.ดร.ภานุ  ศรีวิสุทธิ์", null, "*"], [null, "พล 032577", "ทักษะกีฬาเทเบิลเทนนิส", "1 รายวิชาไม่เกิน 20 คน", null, "อ.ดร.สุนันทา  สุพรรณ", null, null], [null, "พล 032576", "ทักษะกีฬาเทนนิส", null, null, "ผศ.กู้เกียรติ  บุญมี", null, null], [null, "พล 032613", "ทักษะกีฬาปีนผา", null, null, "อ.สุธน  เพ็ชรนิล", null, null], [null, "พล 044272", "ทักษะกีฬาเทคบอล", null, null, "อ.สมพงค์  แก้วเวหา", null, null], [null, "พล 032583", "ทักษะกีฬามวยปล้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร", null, null], [null, "พล 042267", "ทักษะกีฬาวอลเลย์บอลชายหาด", null, null, "อ.นฤณัฐ  ไชยเจริญ", null, null], ["รวม 9 รายวิชา 29คาบ", null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่3", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 3", null, null, null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน", null, null], [1, "สข 012091", "เพศศึกษาและชีวิตครอบครัว ", "3(3-0-6)", "วิชาบังคับ", "อ.ดร.ภาสกร  ชาญจิราวดี", null, null], [2, "กศ 043018", "การวัดและประเมินผลการศึกษาและการเรียนรู้", "3(2-2-5)", "วิชาบังคับ", "ผศ.ดร.ยานี  จรคงสี", null, "* ผู้บริหาร"], [3, "พล 013159", "นวัตกรรมและเทคโนโลยีสารสนเทศ ทางพลศึกษา", "2(1-2-3)", "นวัตกรรมและเทคโนโลยี", "ผศ.ธรณัส ปัญญาไข", null, null], [null, null, null, null, null, "อ.ดร.สุนันทา  สุพรรณ", null, null], [4, "กศ 021036", "ปฏิบัติการสอนในสถานศึกษา 3", "2(90)", "วิชาชีพครู", "อ.สุธน  เพ็ชรนิล", null, null], [null, null, null, "เรียน 4 ชม. เรียนรวมทั้งชั้นปี", null, "อ.ดร.ภาสกร  ชาญจิราวดี", null, null], [5, "พล 032407", "ทักษะกีฬายิมนาสติก", "1(0-2-1)", "ทักษะและการสอนกีฬา", "อ.สุขสวัสดิ์  แย้มศรี", null, null], [6, "พล 072133", "กิจกรรมเข้าจังหวะ", "1(0-2-1)", "ทักษะและการสอนกีฬา", "อ.ดร.สุนันทา  สุพรรณ", null, null], [7, "สข 013081", "โปรแกรมสุขภาพในโรงเรียน", "3(2-2-5)", "วิชาบังคับ", "อ.นฤณัฐ  ไชยเจริญ", null, null], [8, "พล 033451", "การตัดสินกีฬากรีฑา", "2(1-2-3)", "การตัดสินกีฬา", "อ.สุรชัย  แซ่ด่าน", null, null], [null, "พล 043193", "การตัดสินกีฬาวอลเลย์บอล", "เลือกเรียน 1 รายวิชา", null, "ผศ.กู้เกียรติ บุญมี", null, null], [null, "พล 043190", "การตัดสินกีฬาฟุตซอล", "1 รายวิชาไม่เกิน 20 คน", null, "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 043189", "การตัดสินกีฬาบาสเกตบอล", null, null, "ผศ.นฤมล  หวานดี", null, "*"], [null, "พล 033471", "การตัดสินกีฬาว่ายน้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร ", null, null], [null, "พล 033462", "การตัดสินกีฬามวยไทย", null, null, "อ. สุธน  เพ็ชรนิล", null, null], [null, "พล 043187", "การตัดสินกีฬาเซปักตะกร้อ", null, null, "อ.สมพงค์   แก้วเวหา", null, null], [9, "พล 034475", "กลวิธีการฝึกกีฬากรีฑา", "2(1-2-3)", "กลวิธีการฝึกกีฬา", "อ.สุรชัย  แซ่ด่าน", null, null], [null, "พล 044204", "กลวิธีการฝึกกีฬาวอลเลย์บอล", "เลือกเรียน 1 รายวิชา", null, "อ.นฤณัฐ  ไชยเจริญ", null, null], [null, "พล 044201", "กลวิธีการฝึกกีฬาฟุตซอล", "1 รายวิชาไม่เกิน 20 คน", null, "รศ.ดร.ก้องเกียรติ  เชยชม", null, null], [null, "พล 044200", "กลวิธีการฝึกกีฬาบาสเกตบอล", null, null, "ผศ.นฤมล  หวานดี", null, null], [null, "พล 034495", "กลวิธีการฝึกกีฬาว่ายน้ำ", null, null, "อ.นฤเบศภ์  ขวัญเพชร ", null, null], [null, "พล 044198", "กลวิธีการฝึกกีฬาเซปักตะกร้อ", null, null, "อ.สมพงค์   แก้วเวหา", null, null], ["รวม 9 รายวิชา 28 คาบ", null, null, null, null, null, null, null]]}, {"name": "ชั้นปีที่4", "rows": [["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 4 ", null, null, null, null, null], ["ที่", "รหัสวิชา", "ชื่อรายวิชา", "หน่วยกิต", "กลุ่มวิชา", "อาจารย์ผู้สอน"], [1, "กศ 021037", "ปฏิบัติการสอนในสถานศึกษา 4", "6(360)", "วิชาชีพครู", "อ.สุมน  เกลาฉีด"], [null, null, null, null, null, "อ.สุขสวัสดิ์  แย้มศรี "], ["รวม 1 รายวิชา", null, null, null, null, null], [null, null, null, null, null, null]]}]};
+window.SAMPLE=[{"name":"ชั้นปีที่1","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 1 ",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"มศ 041017","ภาษาไทยเพื่อการสื่อสารในศตวรรษที่ 21","3(3-0-6)","วิชาภาษา","อ.ดร.ภาสกร ชาญจิราวดี",null,null],[2,"สศ 021011","คนกีฬาสู่วิถีพลเมืองสร้างสรรค์","3(3-0-6)","วิชาสังคมศาสตร์และมนุษยศาสตร์","ผศ.ดร.ปรียาณัฐ บัวทองจันทร์",null,null],[3,"กศ 051014","จิตวิทยาสำหรับครู","3(2-2-5)","วิชาชีพครู","อ.วรรณา นิ่มวุ่น",null,null],[4,"กศ 032010  ","เทคโนโลยีดิจิทัลเพื่อพัฒนานวัตกรรมฯ              ","3(2-2-5)","นวัตกรรมและเทคโนโลยี","อ.ดร.กานตินุช  สถิรมนัส",null,null],[5,"กศ 071001  ","ปฏิบัติการวิชาชีพระหว่างเรียน 1","1(90) ","วิชาชีพครู","อ.สิบเอกสุรชัย แซ่ด่าน",null,"* ผู้บริหาร"],[null,null,null,"เรียน 4 ชม.เรียนรวมทั้งชั้นปี",null,"อ.วรรณา นิ่มวุ่น",null,null],[6,"สข 001024","กายวิภาคศาสตร์และสรีรวิทยา  ","3(3-0-6)","วิชาบังคับ","รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[7,"พล 051383","ทักษะและการจัดการเรียนรู้ กีฬากระบี่กระบอง","2(1-2-3)","ทักษะและการสอนกีฬา","อ.สุขสวัสดิ์  แย้มศรี",null,null],[8,"พล 031519","ทักษะและการจัดการเรียนรู้ กีฬาว่ายน้ำ","2(1-2-3)","ทักษะและการสอนกีฬา","อ.นฤเบศภ์  ขวัญเพชร",null,null],["รวม 8 รายวิชา 27 คาบ",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่2","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 2",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"วท 091010","คณิตศาสตร์ในชีวิตประจำวัน   ","3(2-2-5)","คณิตศาสตร์","อ.เฉลิมวิชญ์  กุลศิริ",null,null],[2,"พล 072166","ลูกเสือและยุวกาชาด ","2(1-2-3)","วิชาบังคับ","อ.สมพงค์  แก้วเวหา",null,null],[3,"กศ 022039  ","การพัฒนาหลักสูตร                                       ","3(2-2-5)","วิชาชีพครู","อ.สุมน  เกลาฉีด",null,null],[4,"พล 012254","ภาษาอังกฤษสำหรับวิชาชีพพลศึกษา  ","2(1-2-3)","วิชาภาษา","ผศ.ปรัศนี ช่วยการ ซอลีฮี",null,"*"],[5,"กศ 072002","ปฏิบัติการวิชาชีพระหว่างเรียน 2","1(90)","วิชาชีพครู","ผศ.ธรณัส  ปัญญาไข",null,"*"],[null,null,null,"เรียน 4 ชม.เรียนรวมทั้งชั้นปี",null,"อ.ดร.กานตินุช สถิรมนัส",null,null],[6,"พล 051381","ทักษะและการจัดการเรียนรู้กีฬามวยไทย","2(1-2-3)","ทักษะและการสอนกีฬา","อ.สุธน  เพ็ชรนิล",null,null],[7,"พล 061126","ทักษะและการจัดการเรียนรู้ การช่วยชีวิตทางน้ำ","2(1-2-3)","ทักษะและการสอนกีฬา","ผศ.กู้เกียรติ  บุญมี",null,"*"],[8,"วท 061006","รักษ์สิ่งแวดล้อม  ","3(3-0-6)","วิทยาศาสตร์","อ.ดร.รุ่งโรจน์ ไกรสิทธิพาณิชย์",null,null],[9,"พล 042262","ทักษะกีฬาฟุตซอล","1(0-2-1)","ทักษะและการสอนกีฬาขั้นสูง","รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 042270","ทักษะกีฬาแฮนด์บอล","เลือกเรียน 1 รายวิชา ",null,"อ.ดร.ภานุ  ศรีวิสุทธิ์",null,"*"],[null,"พล 032577","ทักษะกีฬาเทเบิลเทนนิส","1 รายวิชาไม่เกิน 20 คน",null,"อ.ดร.สุนันทา  สุพรรณ",null,null],[null,"พล 032576","ทักษะกีฬาเทนนิส",null,null,"ผศ.กู้เกียรติ  บุญมี",null,null],[null,"พล 032613","ทักษะกีฬาปีนผา",null,null,"อ.สุธน  เพ็ชรนิล",null,null],[null,"พล 044272","ทักษะกีฬาเทคบอล",null,null,"อ.สมพงค์  แก้วเวหา",null,null],[null,"พล 032583","ทักษะกีฬามวยปล้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร",null,null],[null,"พล 042267","ทักษะกีฬาวอลเลย์บอลชายหาด",null,null,"อ.นฤณัฐ  ไชยเจริญ",null,null],["รวม 9 รายวิชา 29คาบ",null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่3","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 3",null,null,null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน",null,null],[1,"สข 012091","เพศศึกษาและชีวิตครอบครัว ","3(3-0-6)","วิชาบังคับ","อ.ดร.ภาสกร  ชาญจิราวดี",null,null],[2,"กศ 043018","การวัดและประเมินผลการศึกษาและการเรียนรู้","3(2-2-5)","วิชาบังคับ","ผศ.ดร.ยานี  จรคงสี",null,"* ผู้บริหาร"],[3,"พล 013159","นวัตกรรมและเทคโนโลยีสารสนเทศ ทางพลศึกษา","2(1-2-3)","นวัตกรรมและเทคโนโลยี","ผศ.ธรณัส ปัญญาไข",null,null],[null,null,null,null,null,"อ.ดร.สุนันทา  สุพรรณ",null,null],[4,"กศ 021036","ปฏิบัติการสอนในสถานศึกษา 3","2(90)","วิชาชีพครู","อ.สุธน  เพ็ชรนิล",null,null],[null,null,null,"เรียน 4 ชม. เรียนรวมทั้งชั้นปี",null,"อ.ดร.ภาสกร  ชาญจิราวดี",null,null],[5,"พล 032407","ทักษะกีฬายิมนาสติก","1(0-2-1)","ทักษะและการสอนกีฬา","อ.สุขสวัสดิ์  แย้มศรี",null,null],[6,"พล 072133","กิจกรรมเข้าจังหวะ","1(0-2-1)","ทักษะและการสอนกีฬา","อ.ดร.สุนันทา  สุพรรณ",null,null],[7,"สข 013081","โปรแกรมสุขภาพในโรงเรียน","3(2-2-5)","วิชาบังคับ","อ.นฤณัฐ  ไชยเจริญ",null,null],[8,"พล 033451","การตัดสินกีฬากรีฑา","2(1-2-3)","การตัดสินกีฬา","อ.สุรชัย  แซ่ด่าน",null,null],[null,"พล 043193","การตัดสินกีฬาวอลเลย์บอล","เลือกเรียน 1 รายวิชา",null,"ผศ.กู้เกียรติ บุญมี",null,null],[null,"พล 043190","การตัดสินกีฬาฟุตซอล","1 รายวิชาไม่เกิน 20 คน",null,"รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 043189","การตัดสินกีฬาบาสเกตบอล",null,null,"ผศ.นฤมล  หวานดี",null,"*"],[null,"พล 033471","การตัดสินกีฬาว่ายน้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร ",null,null],[null,"พล 033462","การตัดสินกีฬามวยไทย",null,null,"อ. สุธน  เพ็ชรนิล",null,null],[null,"พล 043187","การตัดสินกีฬาเซปักตะกร้อ",null,null,"อ.สมพงค์   แก้วเวหา",null,null],[9,"พล 034475","กลวิธีการฝึกกีฬากรีฑา","2(1-2-3)","กลวิธีการฝึกกีฬา","อ.สุรชัย  แซ่ด่าน",null,null],[null,"พล 044204","กลวิธีการฝึกกีฬาวอลเลย์บอล","เลือกเรียน 1 รายวิชา",null,"อ.นฤณัฐ  ไชยเจริญ",null,null],[null,"พล 044201","กลวิธีการฝึกกีฬาฟุตซอล","1 รายวิชาไม่เกิน 20 คน",null,"รศ.ดร.ก้องเกียรติ  เชยชม",null,null],[null,"พล 044200","กลวิธีการฝึกกีฬาบาสเกตบอล",null,null,"ผศ.นฤมล  หวานดี",null,null],[null,"พล 034495","กลวิธีการฝึกกีฬาว่ายน้ำ",null,null,"อ.นฤเบศภ์  ขวัญเพชร ",null,null],[null,"พล 044198","กลวิธีการฝึกกีฬาเซปักตะกร้อ",null,null,"อ.สมพงค์   แก้วเวหา",null,null],["รวม 9 รายวิชา 28 คาบ",null,null,null,null,null,null,null]]},{"name":"ชั้นปีที่4","rows":[["คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่   ชั้นปีที่ 4 ",null,null,null,null,null],["ที่","รหัสวิชา","ชื่อรายวิชา","หน่วยกิต","กลุ่มวิชา","อาจารย์ผู้สอน"],[1,"กศ 021037","ปฏิบัติการสอนในสถานศึกษา 4","6(360)","วิชาชีพครู","อ.สุมน  เกลาฉีด"],[null,null,null,null,null,"อ.สุขสวัสดิ์  แย้มศรี "],["รวม 1 รายวิชา",null,null,null,null,null],[null,null,null,null,null,null]]}];
 /* app.js — หน้าจอระบบจัดตาราง */
 (function () {
   const $ = (s) => document.querySelector(s);
@@ -1274,7 +1311,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
   }
   $("#cfgApply").onclick = () => {
     try {
-      S.cfg = JSON.parse($("#cfg").value);
+      S.cfg = S.cfgBase = JSON.parse($("#cfg").value);
       try { localStorage.setItem("tt_cfg", JSON.stringify(S.cfg)); } catch (e) { /* ignore */ }
       toast("บันทึกการตั้งค่าแล้ว", "ok");
       if (S.sheets) parseDraft();
@@ -1282,7 +1319,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
   };
   $("#cfgReset").onclick = () => {
     try { localStorage.removeItem("tt_cfg"); } catch (e) { /* ignore */ }
-    loadCfg(); toast("คืนค่าเริ่มต้นตามคำชี้แจงแล้ว", "ok");
+    loadCfg(); S.cfgBase = S.cfg; toast("คืนค่าเริ่มต้นตามคำชี้แจงแล้ว", "ok");
     if (S.sheets) parseDraft();
   };
 
@@ -1294,6 +1331,20 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
   drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
   async function loadFile(f) {
     if (!f) return;
+    if (/\.json$/i.test(f.name)) {
+      try {
+        const ds = JSON.parse(await f.text());
+        if (ds.type !== "timetable-dataset" || !ds.data || !ds.cfg) throw new Error("ไม่ใช่ไฟล์ชุดข้อมูลของระบบนี้");
+        S.cfgBase = S.cfgBase || S.cfg;
+        S.cfg = ds.cfg; S.scale = 1;
+        S.sheets = { dataset: ds.data };
+        S.draft = JSON.parse(JSON.stringify(ds.data)); S.draft.warnings = [];
+        $("#fileName").textContent = `${f.name} — ชุดข้อมูล JSON (${ds.data.sections.length} ตอนเรียน, ${ds.data.groups.length} กลุ่ม)`;
+        parseDraft(true);
+        toast("อ่านชุดข้อมูล JSON สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
+      } catch (err) { toast("อ่านไฟล์ JSON ไม่ได้: " + err.message, "err"); }
+      return;
+    }
     if (typeof XLSX === "undefined") { toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err"); return; }
     try {
       const wb = XLSX.read(await f.arrayBuffer());
@@ -1301,11 +1352,15 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       $("#fileName").textContent = `${f.name} — ${wb.SheetNames.length} ชีต (${wb.SheetNames.join(", ")})`;
       parseDraft();
       toast("อ่านไฟล์สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
+      S.scale = 1;
     } catch (err) { toast("อ่านไฟล์ไม่ได้: " + err.message, "err"); }
   }
 
-  function parseDraft() {
-    S.draft = TT.parseWorkbook(S.sheets, S.cfg);
+  function parseDraft(keep) {
+    if (!keep) {
+      if (S.sheets && S.sheets.dataset) { S.draft = JSON.parse(JSON.stringify(S.sheets.dataset)); S.draft.warnings = []; }
+      else { if (S.cfgBase) { S.cfg = S.cfgBase; } S.scale = 1; S.draft = TT.parseWorkbook(S.sheets, S.cfg); }
+    }
     const chk = TT.inputCheck(S.draft, S.cfg);
     const d = S.draft;
     $("#preview").hidden = false;
@@ -1322,6 +1377,14 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     $("#saveData").disabled = !chk.ok;
     if (S.renderUsers && S.isAdmin()) S.renderUsers();
   }
+  S.parseDraft = parseDraft;
+  $("#dsExport").onclick = () => {
+    const d = S.data || S.draft;
+    if (!d) return toast("ยังไม่มีข้อมูลให้ส่งออก", "err");
+    const ds = { type: "timetable-dataset", version: 1, created: new Date().toISOString(), cfg: S.cfg,
+      data: { teachers: d.teachers, groups: d.groups, subjects: d.subjects, sections: d.sections } };
+    download("ชุดข้อมูลตารางเรียน.json", new Blob([JSON.stringify(ds)], { type: "application/json" }));
+  };
   function renderIssues(chk, sel) {
     const icon = { error: "⛔", warn: "⚠️", info: "ℹ️" };
     $(sel).innerHTML = chk.issues.length ? chk.issues.map(i =>
@@ -1345,6 +1408,13 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     S.runs = []; S.current = null; S.baseline = null;
     renderIssues(S.check, "#issues2");
     $("#runBtn").disabled = false;
+    $("#vEntity").innerHTML = "";
+    if (S.restoreSaved()) {
+      renderCompare(); renderRuns(); renderValidation(); markDone();
+      toast("กู้คืนตารางที่บันทึกไว้ (รวมการย้ายด้วยมือ) แล้ว", "ok");
+      showTab("view");
+      return;
+    }
     toast("บันทึกข้อมูลแล้ว ไปขั้นจัดตาราง", "ok");
     markDone();
     showTab("solve");
@@ -1382,7 +1452,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     best.v = TT.validate(S.data, S.cfg, best.rows);
     best.rounds = rounds; best.seed0 = seed0; best.cancelled = S.cancel;
     best.at = new Date().toLocaleTimeString("th-TH");
-    S.runs.unshift(best); S.current = best;
+    S.runs.unshift(best); S.current = best; S.persist();
     status.textContent = (S.cancel ? "ยกเลิกระหว่างทาง ใช้ผลที่ดีที่สุดที่ได้ " : "เสร็จแล้ว ") +
       `seed ${best.seed}: ผ่าน ${best.v.passed}/${best.v.total} เงื่อนไข, ชน ${best.v.conflicts}, ขาด ${best.unplacedHours} คาบ`;
     renderCompare(); renderRuns(); renderValidation(); markDone();
@@ -1407,7 +1477,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       S.runs.map((r, i) => `<tr class="${r === S.current ? "sel" : ""}"><td>${r.at}</td><td>${r.seed0}</td><td>${r.rounds}</td><td>${r.seed}</td>
         <td>${r.v.passed}/${r.v.total}</td><td>${r.unplacedHours}</td><td>${r.penalty}</td>
         <td><button data-i="${i}" class="small">ใช้ผลนี้</button></td></tr>`).join("");
-    $("#runs").querySelectorAll("button").forEach(b => b.onclick = () => { S.current = S.runs[+b.dataset.i]; renderCompare(); renderRuns(); renderValidation(); toast("เลือกผลรอบนี้แล้ว", "ok"); });
+    $("#runs").querySelectorAll("button").forEach(b => b.onclick = () => { S.current = S.runs[+b.dataset.i]; S.persist(); renderCompare(); renderRuns(); renderValidation(); toast("เลือกผลรอบนี้แล้ว", "ok"); });
   }
 
   // ---------- 3) ตรวจผล ----------
@@ -1665,7 +1735,8 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
 
   // ---------- 2) ลากย้ายวิชา ----------
   let drag = null;
-  S.undo = []; S.moves = [];
+  const movesOf = () => (S.current.moves = S.current.moves || []);
+  const undoOf = () => (S.current.undo = S.current.undo || []);
   function chunkRows(d) {
     return S.current.rows.filter(r => (r.set || r.section) === d.key && r.slot >= d.start && r.slot < d.start + d.len);
   }
@@ -1741,27 +1812,72 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     if (!res.ok) { if (!silent) toast("ย้ายไม่ได้: " + res.reasons.join(", "), "err"); return false; }
     const P = S.cfg.periods, delta = newStart - d.start;
     const chunk = chunkRows(d);
-    S.undo.push(chunk.map(r => [r, r.slot]));
+    undoOf().push(chunk.map(r => [r, r.slot]));
     chunk.forEach(r => { r.slot += delta; r.day = S.cfg.days[Math.floor(r.slot / P)]; r.period = r.slot % P + 1; });
     S.current.rows.sort((a, b) => a.slot - b.slot || a.section.localeCompare(b.section));
-    S.moves.push([d.key, d.start, d.len, delta]);
+    movesOf().push([d.key, d.start, d.len, delta]);
     S.current.v = TT.validate(S.data, S.cfg, S.current.rows);
     S.current.edited = true;
     if (!silent) {
-      renderView(); renderValidation();
+      S.persist(); renderView(); renderValidation();
       toast(`ย้ายแล้ว · ตรวจผล ${S.current.v.passed}/${S.current.v.total} เงื่อนไข`, S.current.v.passed === S.current.v.total ? "ok" : "err");
     }
     return true;
   }
   $("#undoBtn").onclick = () => {
-    const last = S.undo.pop();
+    const last = S.current && undoOf().pop();
     if (!last) return toast("ไม่มีการย้ายให้ย้อนกลับ", "err");
     const P = S.cfg.periods;
     last.forEach(([r, slot]) => { r.slot = slot; r.day = S.cfg.days[Math.floor(slot / P)]; r.period = slot % P + 1; });
-    S.moves.pop();
+    movesOf().pop(); S.persist();
     S.current.v = TT.validate(S.data, S.cfg, S.current.rows);
     renderView(); renderValidation(); toast("ย้อนกลับแล้ว", "ok");
   };
+
+  // ---------- บันทึก/กู้คืนตาราง (seed + การย้ายด้วยมือ) ----------
+  // ตารางคำนวณซ้ำได้จาก seed เสมอ จึงเก็บแค่ seed กับรายการย้าย ไม่ต้องเก็บทั้งตาราง
+  S.fingerprint = () => S.sha256(JSON.stringify(S.sheets) + "|" + (S.scale || 1) + "|" + JSON.stringify(S.cfg));
+  S.persist = () => {
+    if (!S.current || !S.data) return;
+    try {
+      localStorage.setItem("tt_sched", JSON.stringify({ fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH") }));
+    } catch (e) { /* ignore */ }
+  };
+  S.restoreSaved = () => {
+    let sv = null;
+    try { sv = JSON.parse(localStorage.getItem("tt_sched") || "null"); } catch (e) { /* ignore */ }
+    if (!sv || sv.fp !== S.fingerprint()) return false;
+    const r = TT.solveOnce(S.data, S.cfg, sv.seed);
+    S.current = r;
+    r.moves = []; r.undo = [];
+    let bad = 0;
+    (sv.moves || []).forEach(([key, start, len, delta]) => { if (!applyMove({ key, start, len }, start + delta, true)) bad++; });
+    r.undo = [];   // ประวัติย้อนกลับเริ่มใหม่หลังกู้คืน
+    r.v = TT.validate(S.data, S.cfg, r.rows);
+    r.ms = 0; r.rounds = 1; r.seed0 = sv.seed; r.at = sv.at + " (กู้คืน)"; r.restored = true;
+    const tb = performance.now(); const base = TT.solveBaseline(S.data, S.cfg); base.ms = performance.now() - tb;
+    base.v = TT.validate(S.data, S.cfg, base.rows); S.baseline = base;
+    S.runs = [r];
+    $("#status").textContent = `กู้คืนตารางที่บันทึกไว้เมื่อ ${sv.at}: seed ${sv.seed}, ย้ายด้วยมือ ${r.moves.length} ครั้ง — ผ่าน ${r.v.passed}/${r.v.total} เงื่อนไข${bad ? ` (ข้ามการย้ายที่ใช้ไม่ได้ ${bad} รายการ)` : ""}`;
+    return true;
+  };
+
+  // ---------- ชุดข้อมูลตัวอย่าง เล็ก / กลาง / ใหญ่ ----------
+  document.querySelectorAll("[data-sample]").forEach(b => b.onclick = () => {
+    if (!window.SAMPLE) return toast("ไม่มีชุดข้อมูลตัวอย่างในไฟล์นี้", "err");
+    const k = b.dataset.sample;
+    S.cfgBase = S.cfgBase || S.cfg;
+    S.cfg = S.cfgBase; S.scale = 1;
+    S.sheets = k === "small" ? window.SAMPLE.filter(sh => /1/.test(sh.name)) : window.SAMPLE;
+    S.draft = TT.parseWorkbook(S.sheets, S.cfg);
+    if (k === "large") {
+      const sc = TT.scaleData(S.draft, S.cfg, 3);
+      S.scale = 3; S.draft = sc.data; S.cfg = sc.cfg;
+    }
+    $("#fileName").textContent = { small: "ตัวอย่างเล็ก: ชั้นปีที่ 1 อย่างเดียว (4 กลุ่ม)", medium: "ตัวอย่างกลาง: ข้อมูลโจทย์ครบ (11 กลุ่ม)", large: "ตัวอย่างใหญ่: ข้อมูลโจทย์ ×3 วิทยาเขต (33 กลุ่ม)" }[k];
+    S.parseDraft(true);
+    toast("โหลด" + b.textContent.trim() + " แล้ว ตรวจข้อมูลด้านล่าง", "ok");
+  });
 
   // ---------- 4) หลักฐานเชิงตัวเลข ----------
   const METHODS = [
@@ -1847,7 +1963,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
   function shareURL(type, id) {
     const base = location.href.split("?")[0].split("#")[0].replace(/[^/]*$/, "") + "index_with_data.html";
     const q = new URLSearchParams({ m: "1", seed: S.current.seed, t: type, id });
-    if (S.moves.length) q.set("mv", S.moves.map(m => m.join("~")).join(","));
+    if (movesOf().length) q.set("mv", movesOf().map(m => m.join("~")).join(","));
     return base + "?" + q.toString();
   }
   function qrSVG(text, cell) {
@@ -1882,7 +1998,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     S.data = TT.parseWorkbook(S.sheets, S.cfg);
     S.check = TT.inputCheck(S.data, S.cfg);
     const r = TT.solveOnce(S.data, S.cfg, seed);
-    S.current = r;
+    S.current = r; r.moves = []; r.undo = [];
     (params.get("mv") || "").split(",").filter(Boolean).forEach(m => {
       const [key, start, len, delta] = m.split("~");
       applyMove({ key, start: +start, len: +len }, +start + +delta, true);
@@ -1953,7 +2069,16 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     return us;
   }
   function saveUsers() { try { localStorage.setItem("tt_users", JSON.stringify(S.users)); } catch (e) { /* ignore */ } }
-  S.users = loadUsers(); saveUsers();
+  S.users = loadUsers();
+  // บัญชีทดสอบ: มีในทุกเครื่องตั้งแต่เปิดครั้งแรก (ถ้าผู้ดูแลลบทิ้ง จะไม่ถูกสร้างกลับ)
+  const DEMO = [["t01", "อาจารย์ (บัญชีทดสอบ)", "teacher", "T01"], ["g1-1", "นักศึกษากลุ่ม 1/1", "student", "1/1"]];
+  let seeded = null;
+  try { seeded = localStorage.getItem("tt_demo_v1"); } catch (e) { /* ignore */ }
+  if (!seeded) {
+    DEMO.forEach(([u, n, r, ref]) => { if (!S.users.some(x => x.u === u)) { const nu = makeUser(u, n, r, ref, "1234"); nu.demo = true; S.users.push(nu); } });
+    try { localStorage.setItem("tt_demo_v1", "1"); } catch (e) { /* ignore */ }
+  }
+  saveUsers();
   S.user = null;
 
   // ---------- ล็อกอิน ----------
@@ -1970,12 +2095,14 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
       return;
     }
     S.user = usr;
+    if (usr.demo && usr.role === "teacher" && S.data) { const t = S.data.teachers.find(x => x.id === usr.ref); if (t) { usr.name = t.name; saveUsers(); } }
     try { sessionStorage.setItem("tt_session", usr.u); } catch (e) { /* ignore */ }
     $("#lgPass").value = ""; $("#lgErr").textContent = ""; $("#lgPass").type = "password"; $("#paneLogin .eye").classList.remove("on");
     applyRole();
     toast(`ยินดีต้อนรับ ${usr.name}`, "ok");
   }
   $("#lgBtn").onclick = doLogin;
+  document.querySelectorAll("[data-demo]").forEach(b => b.onclick = () => { const [u, p] = b.dataset.demo.split("|"); $("#lgUser").value = u; $("#lgPass").value = p; $("#lgBtn").focus(); });
   $("#lgPass").onkeydown = $("#lgUser").onkeydown = (e) => { if (e.key === "Enter") doLogin(); };
   $("#logoutBtn").onclick = () => {
     S.user = null;
@@ -2317,7 +2444,7 @@ tr.editing .pwwrap.sm { width: 100%; min-width: 160px; }
     parseDraft();
     if (!$("#saveData").disabled) {
       $("#saveData").click();
-      $("#runBtn").onclick().then(() => showTab("view"));
+      if (!S.current) $("#runBtn").onclick().then(() => showTab("view"));
     }
   }
 })();

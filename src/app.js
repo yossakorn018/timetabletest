@@ -43,7 +43,7 @@
   }
   $("#cfgApply").onclick = () => {
     try {
-      S.cfg = JSON.parse($("#cfg").value);
+      S.cfg = S.cfgBase = JSON.parse($("#cfg").value);
       try { localStorage.setItem("tt_cfg", JSON.stringify(S.cfg)); } catch (e) { /* ignore */ }
       toast("บันทึกการตั้งค่าแล้ว", "ok");
       if (S.sheets) parseDraft();
@@ -51,7 +51,7 @@
   };
   $("#cfgReset").onclick = () => {
     try { localStorage.removeItem("tt_cfg"); } catch (e) { /* ignore */ }
-    loadCfg(); toast("คืนค่าเริ่มต้นตามคำชี้แจงแล้ว", "ok");
+    loadCfg(); S.cfgBase = S.cfg; toast("คืนค่าเริ่มต้นตามคำชี้แจงแล้ว", "ok");
     if (S.sheets) parseDraft();
   };
 
@@ -63,6 +63,20 @@
   drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
   async function loadFile(f) {
     if (!f) return;
+    if (/\.json$/i.test(f.name)) {
+      try {
+        const ds = JSON.parse(await f.text());
+        if (ds.type !== "timetable-dataset" || !ds.data || !ds.cfg) throw new Error("ไม่ใช่ไฟล์ชุดข้อมูลของระบบนี้");
+        S.cfgBase = S.cfgBase || S.cfg;
+        S.cfg = ds.cfg; S.scale = 1;
+        S.sheets = { dataset: ds.data };
+        S.draft = JSON.parse(JSON.stringify(ds.data)); S.draft.warnings = [];
+        $("#fileName").textContent = `${f.name} — ชุดข้อมูล JSON (${ds.data.sections.length} ตอนเรียน, ${ds.data.groups.length} กลุ่ม)`;
+        parseDraft(true);
+        toast("อ่านชุดข้อมูล JSON สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
+      } catch (err) { toast("อ่านไฟล์ JSON ไม่ได้: " + err.message, "err"); }
+      return;
+    }
     if (typeof XLSX === "undefined") { toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err"); return; }
     try {
       const wb = XLSX.read(await f.arrayBuffer());
@@ -70,11 +84,15 @@
       $("#fileName").textContent = `${f.name} — ${wb.SheetNames.length} ชีต (${wb.SheetNames.join(", ")})`;
       parseDraft();
       toast("อ่านไฟล์สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
+      S.scale = 1;
     } catch (err) { toast("อ่านไฟล์ไม่ได้: " + err.message, "err"); }
   }
 
-  function parseDraft() {
-    S.draft = TT.parseWorkbook(S.sheets, S.cfg);
+  function parseDraft(keep) {
+    if (!keep) {
+      if (S.sheets && S.sheets.dataset) { S.draft = JSON.parse(JSON.stringify(S.sheets.dataset)); S.draft.warnings = []; }
+      else { if (S.cfgBase) { S.cfg = S.cfgBase; } S.scale = 1; S.draft = TT.parseWorkbook(S.sheets, S.cfg); }
+    }
     const chk = TT.inputCheck(S.draft, S.cfg);
     const d = S.draft;
     $("#preview").hidden = false;
@@ -91,6 +109,14 @@
     $("#saveData").disabled = !chk.ok;
     if (S.renderUsers && S.isAdmin()) S.renderUsers();
   }
+  S.parseDraft = parseDraft;
+  $("#dsExport").onclick = () => {
+    const d = S.data || S.draft;
+    if (!d) return toast("ยังไม่มีข้อมูลให้ส่งออก", "err");
+    const ds = { type: "timetable-dataset", version: 1, created: new Date().toISOString(), cfg: S.cfg,
+      data: { teachers: d.teachers, groups: d.groups, subjects: d.subjects, sections: d.sections } };
+    download("ชุดข้อมูลตารางเรียน.json", new Blob([JSON.stringify(ds)], { type: "application/json" }));
+  };
   function renderIssues(chk, sel) {
     const icon = { error: "⛔", warn: "⚠️", info: "ℹ️" };
     $(sel).innerHTML = chk.issues.length ? chk.issues.map(i =>
@@ -114,6 +140,13 @@
     S.runs = []; S.current = null; S.baseline = null;
     renderIssues(S.check, "#issues2");
     $("#runBtn").disabled = false;
+    $("#vEntity").innerHTML = "";
+    if (S.restoreSaved()) {
+      renderCompare(); renderRuns(); renderValidation(); markDone();
+      toast("กู้คืนตารางที่บันทึกไว้ (รวมการย้ายด้วยมือ) แล้ว", "ok");
+      showTab("view");
+      return;
+    }
     toast("บันทึกข้อมูลแล้ว ไปขั้นจัดตาราง", "ok");
     markDone();
     showTab("solve");
@@ -151,7 +184,7 @@
     best.v = TT.validate(S.data, S.cfg, best.rows);
     best.rounds = rounds; best.seed0 = seed0; best.cancelled = S.cancel;
     best.at = new Date().toLocaleTimeString("th-TH");
-    S.runs.unshift(best); S.current = best;
+    S.runs.unshift(best); S.current = best; S.persist();
     status.textContent = (S.cancel ? "ยกเลิกระหว่างทาง ใช้ผลที่ดีที่สุดที่ได้ " : "เสร็จแล้ว ") +
       `seed ${best.seed}: ผ่าน ${best.v.passed}/${best.v.total} เงื่อนไข, ชน ${best.v.conflicts}, ขาด ${best.unplacedHours} คาบ`;
     renderCompare(); renderRuns(); renderValidation(); markDone();
@@ -176,7 +209,7 @@
       S.runs.map((r, i) => `<tr class="${r === S.current ? "sel" : ""}"><td>${r.at}</td><td>${r.seed0}</td><td>${r.rounds}</td><td>${r.seed}</td>
         <td>${r.v.passed}/${r.v.total}</td><td>${r.unplacedHours}</td><td>${r.penalty}</td>
         <td><button data-i="${i}" class="small">ใช้ผลนี้</button></td></tr>`).join("");
-    $("#runs").querySelectorAll("button").forEach(b => b.onclick = () => { S.current = S.runs[+b.dataset.i]; renderCompare(); renderRuns(); renderValidation(); toast("เลือกผลรอบนี้แล้ว", "ok"); });
+    $("#runs").querySelectorAll("button").forEach(b => b.onclick = () => { S.current = S.runs[+b.dataset.i]; S.persist(); renderCompare(); renderRuns(); renderValidation(); toast("เลือกผลรอบนี้แล้ว", "ok"); });
   }
 
   // ---------- 3) ตรวจผล ----------
@@ -377,7 +410,7 @@
     parseDraft();
     if (!$("#saveData").disabled) {
       $("#saveData").click();
-      $("#runBtn").onclick().then(() => showTab("view"));
+      if (!S.current) $("#runBtn").onclick().then(() => showTab("view"));
     }
   }
 })();

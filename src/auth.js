@@ -34,7 +34,16 @@
     return us;
   }
   function saveUsers() { try { localStorage.setItem("tt_users", JSON.stringify(S.users)); } catch (e) { /* ignore */ } }
-  S.users = loadUsers(); saveUsers();
+  S.users = loadUsers();
+  // บัญชีทดสอบ: มีในทุกเครื่องตั้งแต่เปิดครั้งแรก (ถ้าผู้ดูแลลบทิ้ง จะไม่ถูกสร้างกลับ)
+  const DEMO = [["t01", "อาจารย์ (บัญชีทดสอบ)", "teacher", "T01"], ["g1-1", "นักศึกษากลุ่ม 1/1", "student", "1/1"]];
+  let seeded = null;
+  try { seeded = localStorage.getItem("tt_demo_v1"); } catch (e) { /* ignore */ }
+  if (!seeded) {
+    DEMO.forEach(([u, n, r, ref]) => { if (!S.users.some(x => x.u === u)) { const nu = makeUser(u, n, r, ref, "1234"); nu.demo = true; S.users.push(nu); } });
+    try { localStorage.setItem("tt_demo_v1", "1"); } catch (e) { /* ignore */ }
+  }
+  saveUsers();
   S.user = null;
 
   // ---------- ล็อกอิน ----------
@@ -51,12 +60,14 @@
       return;
     }
     S.user = usr;
+    if (usr.demo && usr.role === "teacher" && S.data) { const t = S.data.teachers.find(x => x.id === usr.ref); if (t) { usr.name = t.name; saveUsers(); } }
     try { sessionStorage.setItem("tt_session", usr.u); } catch (e) { /* ignore */ }
     $("#lgPass").value = ""; $("#lgErr").textContent = ""; $("#lgPass").type = "password"; $("#paneLogin .eye").classList.remove("on");
     applyRole();
     toast(`ยินดีต้อนรับ ${usr.name}`, "ok");
   }
   $("#lgBtn").onclick = doLogin;
+  document.querySelectorAll("[data-demo]").forEach(b => b.onclick = () => { const [u, p] = b.dataset.demo.split("|"); $("#lgUser").value = u; $("#lgPass").value = p; $("#lgBtn").focus(); });
   $("#lgPass").onkeydown = $("#lgUser").onkeydown = (e) => { if (e.key === "Enter") doLogin(); };
   $("#logoutBtn").onclick = () => {
     S.user = null;

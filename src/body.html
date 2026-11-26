@@ -51,7 +51,10 @@
       <p class="lgswitch">มีบัญชีแล้ว? <a href="#" data-pane="paneLogin">เข้าสู่ระบบ</a></p>
     </div>
     <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
-    <p class="muted small">บัญชีเริ่มต้น: <b>admin</b> / <b>admin1234</b></p>
+    <div class="demo"><b>บัญชีทดสอบ</b> (กดเพื่อกรอกให้)
+      <button type="button" class="small" data-demo="admin|admin1234">ผู้ดูแล admin</button>
+      <button type="button" class="small" data-demo="t01|1234">อาจารย์ t01</button>
+      <button type="button" class="small" data-demo="g1-1|1234">นักศึกษา g1-1</button></div>
   </div>
 </div>
 <header>
@@ -59,7 +62,7 @@
     <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
     <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
   </div>
-  <div class="userbox"><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
+  <div class="userbox"><a class="manual" href="manual.html" target="_blank" title="คู่มือผู้ใช้">📘 คู่มือ</a><div><b id="userName"></b><span id="userRole"></span></div><button id="logoutBtn" class="small">ออกจากระบบ</button></div>
 </header>
 <nav>
   <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
@@ -73,13 +76,20 @@
 <main>
 <section class="tab" id="import">
   <h2>นำเข้าไฟล์รายวิชา (Excel)</h2>
-  <p class="muted">รองรับไฟล์ .xlsx/.xls ที่แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
+  <p class="muted">รองรับ 2 รูปแบบ: <b>Excel</b> (.xlsx/.xls) และ <b>ชุดข้อมูล JSON</b> ที่ส่งออกจากระบบ · Excel แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
   <div class="drop" id="drop">
     <div class="ico">📂</div>
     <div><b>ลากไฟล์ Excel มาวางที่นี่</b><br><span id="fileName" class="muted">หรือกดปุ่มเพื่อเลือกไฟล์ (.xlsx)</span></div>
-    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
+    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls,.json"></label>
     <button id="tplBtn" class="ghost">⬇ ไฟล์แม่แบบ</button>
   </div>
+  <div class="samples"><b>หรือลองชุดข้อมูลตัวอย่าง:</b>
+    <button data-sample="small">🟢 เล็ก · ปี 1 (4 กลุ่ม)</button>
+    <button data-sample="medium">🟡 กลาง · โจทย์จริง (11 กลุ่ม)</button>
+    <button data-sample="large">🔴 ใหญ่ · ×3 วิทยาเขต (33 กลุ่ม)</button></div>
+  <p class="muted small dl">⬇ ดาวน์โหลดไฟล์ตัวอย่าง: <a href="samples/ตัวอย่าง_เล็ก_ปี1.xlsx" download>เล็ก (.xlsx)</a> ·
+    <a href="samples/ตัวอย่าง_กลาง_โจทย์จริง.xlsx" download>กลาง (.xlsx)</a> · <a href="samples/ตัวอย่าง_ใหญ่_3วิทยาเขต.json" download>ใหญ่ (.json)</a>
+    · <button id="dsExport" class="small ghost" type="button">ส่งออกชุดข้อมูลปัจจุบัน (.json)</button></p>
   <details>
     <summary>ตั้งค่าเงื่อนไขจากคำชี้แจง (กลุ่ม ห้อง สนาม เวลา ผู้บริหาร)</summary>
     <p class="muted">แก้เป็น JSON ได้ทุกค่า ระบบไม่ได้เขียนข้อมูลตายตัวในโค้ด</p>

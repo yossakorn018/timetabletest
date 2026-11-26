@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือผู้ใช้ — ระบบจัดตารางเรียน-สอนอัตโนมัติ</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --pri: #2563eb; --pri2: #7c3aed; --line: #e3e8f2; --muted: #6b7489; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Sarabun", "Leelawadee UI", Tahoma, sans-serif; color: #1e2533; background: #f4f6fb; line-height: 1.65; font-size: 15px; }
+  h1, h2, h3 { font-family: "Prompt", "Sarabun", sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 22px 60px; }
+  header { background: linear-gradient(120deg, var(--pri), var(--pri2)); color: #fff; padding: 30px 22px; margin-bottom: 22px; }
+  header .wrap { padding-bottom: 0; }
+  header h1 { margin: 0; font-size: 26px; } header p { margin: 6px 0 0; opacity: .9; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; margin-bottom: 16px; }
+  h2 { font-size: 20px; margin: 0 0 10px; display: flex; align-items: center; gap: 10px; }
+  h2 .n { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 15px; flex: none; }
+  h3 { font-size: 16px; margin: 14px 0 6px; }
+  ol, ul { margin: 6px 0; padding-left: 22px; } li { margin: 3px 0; }
+  img { width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 8px 0 4px; }
+  .cap { font-size: 12.5px; color: var(--muted); text-align: center; margin: 0 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #f3f6fc; }
+  .tip { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 8px 12px; font-size: 14px; margin: 8px 0; }
+  .note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 8px 12px; font-size: 14px; margin: 8px 0; }
+  code, kbd { background: #f1f5f9; border-radius: 5px; padding: 1px 6px; font-size: 13.5px; }
+  .b { display: inline-block; padding: 0 8px; border-radius: 6px; background: #eef2ff; color: #3730a3; font-size: 13.5px; font-weight: 600; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .toc { columns: 2; font-size: 14.5px; } .toc a { color: var(--pri); text-decoration: none; }
+  @media (max-width: 700px) { .two { grid-template-columns: 1fr; } .toc { columns: 1; } }
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff; font-size: 12.5px; }
+    header { padding: 16px 18px; margin-bottom: 12px; border-radius: 10px; } header h1 { font-size: 21px; }
+    .wrap { padding: 0; }
+    .card { break-inside: avoid; padding: 12px 16px; margin-bottom: 10px; }
+    .card.big { break-inside: avoid; } h2 { break-after: avoid; }
+    img { max-height: 320px; object-fit: contain; object-position: top; }
+    h2 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>📘 คู่มือผู้ใช้ (ฉบับย่อ)</h1>
+  <p>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ · คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
+</div></header>
+<div class="wrap">
+
+<div class="card">
+  <h2>ระบบนี้ทำอะไร</h2>
+  <p>รับไฟล์รายวิชา (Excel) แล้วจัดตารางเรียน ตารางสอน และตารางการใช้ห้อง/สนามให้อัตโนมัติ ไม่ให้ผู้สอน ห้อง สนาม หรือกลุ่มเรียนซ้อนคาบ
+     ตรวจผลตามเงื่อนไขโจทย์ 11 ข้อ แก้ไขด้วยการลากวาง และส่งออกเป็น Excel / CSV / PDF ได้</p>
+  <table>
+    <tr><th>ลิงก์ระบบ</th><td><code>https://yossakorn018.github.io/timetabletest/</code> (ยังไม่มีข้อมูล)<br>
+      <code>https://yossakorn018.github.io/timetabletest/index_with_data.html</code> (นำเข้าข้อมูลโจทย์แล้ว)</td></tr>
+    <tr><th>บัญชีทดสอบ</th><td>ผู้ดูแลระบบ <code>admin</code> / <code>admin1234</code> · อาจารย์ <code>t01</code> / <code>1234</code> · นักศึกษา <code>g1-1</code> / <code>1234</code>
+      <br><small>มีในทุกเครื่องตั้งแต่เปิดครั้งแรก กดปุ่มบัญชีทดสอบในหน้าเข้าสู่ระบบเพื่อกรอกให้อัตโนมัติ</small></td></tr>
+    <tr><th>แนะนำสำหรับกรรมการ</th><td>เปิดลิงก์ <code>index_with_data.html</code> ซึ่งนำเข้าข้อมูลโจทย์และจัดตารางไว้แล้ว เข้าสู่ระบบแล้วดูผลได้ทันที</td></tr>
+    <tr><th>เบราว์เซอร์</th><td>Google Chrome หรือ Microsoft Edge รุ่นใหม่ ต้องต่ออินเทอร์เน็ต</td></tr>
+  </table>
+  <div class="toc">
+    <a href="#s1">1. เข้าสู่ระบบ / สมัคร / ลืมรหัส</a><br><a href="#s2">2. นำเข้าข้อมูล</a><br><a href="#s3">3. จัดตาราง</a><br>
+    <a href="#s4">4. ตรวจผล</a><br><a href="#s5">5. ดูตาราง แก้ไข ส่งออก</a><br><a href="#s6">6. รายงานและหลักฐาน</a><br>
+    <a href="#s7">7. จัดการผู้ใช้</a><br><a href="#s8">8. สำหรับอาจารย์ / นักศึกษา</a><br><a href="#s9">9. ปัญหาที่พบบ่อย</a>
+  </div>
+</div>
+
+<div class="card" id="s1">
+  <h2><span class="n">1</span>เข้าสู่ระบบ / สมัครบัญชี / ลืมรหัสผ่าน</h2>
+  <div class="two">
+    <div>
+      <ol>
+        <li>กรอก <b>ชื่อผู้ใช้</b> และ <b>รหัสผ่าน</b> กดรูปตา 👁 เพื่อดูรหัสที่พิมพ์ แล้วกด <span class="b">เข้าสู่ระบบ</span></li>
+        <li><b>สมัครบัญชี:</b> กดลิงก์ "สมัครบัญชี" กรอกข้อมูล เลือกว่าเป็นอาจารย์หรือนักศึกษา แล้วรอผู้ดูแลอนุมัติจึงเข้าใช้ได้</li>
+        <li><b>ลืมรหัสผ่าน:</b> กด "ลืมรหัสผ่าน?" กรอกชื่อผู้ใช้ ระบบจะส่งคำขอถึงผู้ดูแล ผู้ดูแลตั้งรหัสใหม่แล้วแจ้งให้ผู้ใช้</li>
+      </ol>
+      <table><tr><th>บทบาท</th><th>สิทธิ์</th></tr>
+        <tr><td>ผู้ดูแลระบบ</td><td>ทุกเมนู</td></tr>
+        <tr><td>อาจารย์</td><td>ตารางสอนและวิชาที่ตัวเองสอนเท่านั้น</td></tr>
+        <tr><td>นักศึกษา</td><td>ตารางเรียนของกลุ่มตัวเองเท่านั้น</td></tr></table>
+    </div>
+    <div><img src="manual/01-login.jpg" alt="หน้าเข้าสู่ระบบ"><p class="cap">หน้าเข้าสู่ระบบ</p></div>
+  </div>
+</div>
+
+<div class="card big" id="s2">
+  <h2><span class="n">2</span>นำเข้าข้อมูล (ผู้ดูแลระบบ)</h2>
+  <ol>
+    <li>เมนู <span class="b">1 นำเข้าข้อมูล</span> → <b>ลากไฟล์ Excel มาวาง</b> หรือกด <span class="b">เลือกไฟล์</span>
+      <br><small>รูปแบบไฟล์: แยกชีตตามชั้นปี คอลัมน์ ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต เช่น 3(2-2-5) | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร) — กด <span class="b">⬇ ไฟล์แม่แบบ</span> เพื่อดาวน์โหลดตัวอย่าง</small></li>
+    <li>ไม่มีไฟล์? กดปุ่ม <b>ชุดข้อมูลตัวอย่าง</b> เล็ก (ปี 1) / กลาง (โจทย์จริง) / ใหญ่ (×3 วิทยาเขต) หรือดาวน์โหลดไฟล์ตัวอย่างทั้ง 3 ไฟล์จากลิงก์ใต้ปุ่ม</li>
+    <li>รองรับไฟล์ <b>ชุดข้อมูล JSON</b> ด้วย: กด <span class="b">ส่งออกชุดข้อมูลปัจจุบัน (.json)</span> เพื่อเก็บไว้ แล้วนำเข้ากลับได้ทุกเมื่อ</li>
+    <li>ถ้าคำชี้แจงเปลี่ยน เปิด <b>"ตั้งค่าเงื่อนไขจากคำชี้แจง"</b> แก้จำนวนกลุ่ม ห้องประจำ สนาม เวลาล็อก หรือรายชื่อผู้บริหาร แล้วกด <span class="b">บันทึกการตั้งค่า</span></li>
+    <li>ตรวจ <b>สรุปข้อมูล</b> และ <b>ผลตรวจก่อนคำนวณ</b>: ⛔ ต้องแก้ก่อน · ⚠️ ควรตรวจ · ℹ️ แจ้งให้ทราบ (มีวิธีแก้บอกไว้ทุกข้อ)
+      <br><small>ตรวจ เช่น ไฟล์ว่าง/ผิดรูปแบบ · รหัสวิชาซ้ำ · ไม่มีชื่อวิชา · ไม่มีผู้สอน · หน่วยกิตอ่านไม่ได้ · หาสนามไม่เจอ · ชั่วโมงเกินเวลาที่มี · ที่นั่งวิชาเลือกไม่พอ</small></li>
+    <li>กด <span class="b">ยืนยันและบันทึกข้อมูล →</span></li>
+  </ol>
+  <img src="manual/02-import.jpg" alt="หน้านำเข้าข้อมูล"><p class="cap">หน้านำเข้าข้อมูล: ลากวางไฟล์ / ชุดตัวอย่าง / สรุปและผลตรวจข้อมูล</p>
+  <div class="note">ระบบแปลงรายวิชาเป็น <b>ตอนเรียน</b> อัตโนมัติ: ทฤษฎีใช้ห้องประจำกลุ่ม · นวัตกรรมฯ ใช้ห้องคอม · ทักษะกีฬาใช้ห้องเรียน+สนามพร้อมกัน ·
+    ปฏิบัติการวิชาชีพเรียนรวมทั้งชั้นปี · วิชาเลือกทุกวิชาในชุดเดียวกันเปิดพร้อมกัน · ชั้นปีที่ 4 ฝึกสอนทั้งภาค ไม่จัดคาบ</div>
+</div>
+
+<div class="card big" id="s3">
+  <h2><span class="n">3</span>จัดตาราง</h2>
+  <ol>
+    <li>เมนู <span class="b">2 จัดตาราง</span> ใส่ <b>Seed</b> (ค่าเริ่มต้นการสุ่ม ใช้ค่าเดิมได้ผลเดิมทุกครั้ง) และ <b>จำนวนรอบ</b> (แนะนำ 20–30)</li>
+    <li>กด <span class="b">▶ เริ่มจัดตาราง</span> ดูแถบความคืบหน้า กด <span class="b">■ ยกเลิก</span> ได้ตลอดเวลา ระบบจะใช้ผลที่ดีที่สุดที่ได้</li>
+    <li>ดู <b>ตารางเปรียบเทียบกับวิธีพื้นฐาน</b> และ <b>ประวัติการรัน</b> กด "ใช้ผลนี้" เพื่อสลับไปใช้ผลรอบอื่น</li>
+    <li>กด <span class="b">▶ เล่น</span> ในกล่อง 🎬 เพื่อดูการทำงานของ AI ทีละขั้น: ① Plan วางแผน → ② Act วาง → ③ Repair ซ่อม → ④ Check ตรวจ</li>
+  </ol>
+  <img src="manual/03-solve.jpg" alt="หน้าจัดตาราง"><p class="cap">หน้าจัดตาราง และภาพเคลื่อนไหวการทำงานของ AI</p>
+  <div class="tip">💡 หลักการ: จัดวิชาที่มีข้อจำกัดมากก่อน (วิชาเลือก → เรียนรวม → สอนร่วม → ทักษะกีฬา → ห้องคอม → ทฤษฎี) เลือกช่องที่กระจายภาระดีที่สุด
+    ถ้าวางไม่ลงจะย้ายวิชาที่ชนออกแล้วจัดใหม่ และเก็บผลดีที่สุดจากหลาย seed</div>
+</div>
+
+<div class="card" id="s4">
+  <h2><span class="n">4</span>ตรวจผล</h2>
+  <div class="two">
+    <div>
+      <p>เมนู <span class="b">3 ตรวจผล</span> แสดงผลตัวตรวจอิสระ 11 ข้อ ✅ ผ่าน / ❌ ไม่ผ่าน พร้อมรายการจุดที่ผิด</p>
+      <ol style="font-size:13.5px">
+        <li>คาบครบตามหน่วยกิต (บรรยาย+ปฏิบัติ)</li><li>ไม่จัดในคาบพัก/พบอาจารย์ที่ปรึกษา/กิจกรรม</li><li>ผู้สอนไม่ซ้อนคาบ</li>
+        <li>ห้อง/สนามไม่ซ้อนคาบ</li><li>กลุ่มเรียนไม่ซ้อนคาบ</li><li>ผู้บริหารไม่สอนอังคารคาบ 1–4</li><li>ใช้ห้องถูกประเภท</li>
+        <li>วิชาสอนร่วม ผู้สอนอยู่ครบ</li><li>ทักษะกีฬา/วิชาเลือก เรียนคาบติดกัน</li><li>วิชาเลือกในชุดเดียวกันเวลาเดียวกัน</li><li>ความจุห้องเพียงพอ</li>
+      </ol>
+    </div>
+    <div><img src="manual/04-check.jpg" alt="หน้าตรวจผล"><p class="cap">ผลตรวจ 11 เงื่อนไข</p></div>
+  </div>
+</div>
+
+<div class="card big" id="s5">
+  <h2><span class="n">5</span>ดูตาราง แก้ไข และส่งออก</h2>
+  <ol>
+    <li>เมนู <span class="b">4 ดูตาราง/ส่งออก</span> เลือกมุมมอง: <b>ตารางเรียน (กลุ่ม)</b> / <b>ตารางสอน (ผู้สอน)</b> / <b>ตารางการใช้พื้นที่ (ห้อง/สนาม)</b> ค้นหาชื่อได้</li>
+    <li><b>แก้ไขด้วยการลากวาง:</b> จับช่องวิชาแล้วลากไปช่องใหม่ — <span style="color:#16a34a;font-weight:600">เขียว = วางได้</span>
+      <span style="color:#dc2626;font-weight:600">แดง = ชน</span> ป้ายบอกเหตุผล เช่น "กลุ่ม 1/1 เรียน มศ 041017 อยู่" · ระบบตรวจ 11 ข้อใหม่ทุกครั้ง · กด <span class="b">↶ ย้อนกลับ</span> ได้</li>
+    <li>ส่งออก: <span class="b">ส่งออก CSV</span> <span class="b">ส่งออก Excel</span> (ทุกกลุ่ม/ผู้สอน/ห้อง) <span class="b">พิมพ์ / PDF</span>
+      <br><small>ตอนพิมพ์: Layout = Landscape · ติ๊ก Background graphics · เอา Headers and footers ออก</small></li>
+    <li><span class="b">📱 QR Code</span> ให้นักศึกษา/อาจารย์สแกนดูตารางบนมือถือ (ใช้ได้เมื่อเปิดผ่านลิงก์ GitHub Pages) กด "แสดง QR ทุกกลุ่ม" เพื่อพิมพ์แจก</li>
+  </ol>
+  <img src="manual/05-view.jpg" alt="หน้าดูตาราง"><p class="cap">ตารางเรียนรายกลุ่ม สีบอกประเภทวิชา</p>
+  <div class="note">ตารางและการลากย้ายถูกบันทึกอัตโนมัติ รีเฟรชหน้าแล้วยังอยู่ (เก็บเฉพาะ seed และรายการย้าย จึงคำนวณตารางเดิมกลับมาได้ทุกครั้ง)</div>
+</div>
+
+<div class="card" id="s6">
+  <h2><span class="n">6</span>รายงานและหลักฐาน</h2>
+  <div class="two">
+    <div>
+      <ul>
+        <li><span class="b">5 รายงาน</span> ภาระสอนของผู้สอน (นับวิชาสอนร่วมให้ทุกคน) และอัตราการใช้ห้อง/สนาม</li>
+        <li><span class="b">6 หลักฐาน/ทดสอบ</span>
+          <br>• <b>เปรียบเทียบ 4 วิธี</b>: รันหลาย seed แล้วนับว่าแต่ละวิธีจัดครบกี่ % — แสดงว่าการ "จัดวิชายากก่อน" และ "ซ่อม" ช่วยจริง
+          <br>• <b>Stress test</b>: ข้อมูลใหญ่ขึ้น ×1–×10 วัดเวลา ความถูกต้อง หน่วยความจำ</li>
+      </ul>
+    </div>
+    <div><img src="manual/06-bench.jpg" alt="หน้าหลักฐาน"><p class="cap">หน้าหลักฐานเชิงตัวเลข</p></div>
+  </div>
+</div>
+
+<div class="card" id="s7">
+  <h2><span class="n">7</span>จัดการผู้ใช้ (ผู้ดูแลระบบ)</h2>
+  <div class="two">
+    <div>
+      <ul>
+        <li><b>สร้างผู้ใช้:</b> กรอกชื่อผู้ใช้ รหัสผ่าน เลือกบทบาท และผูกกับอาจารย์/กลุ่ม → <span class="b">+ สร้างผู้ใช้</span></li>
+        <li><b>สร้างหลายบัญชี:</b> <span class="b">สร้างบัญชีอาจารย์ทุกคน</span> (t01, t02, …) <span class="b">สร้างบัญชีทุกกลุ่มเรียน</span> (g1-1, g1-2, …)</li>
+        <li><b>แก้ไข:</b> กด ✏️ แก้ไข เปลี่ยนชื่อผู้ใช้ ชื่อ บทบาท การผูก หรือรหัสผ่าน — <b>เปลี่ยนรหัสต้องใส่รหัสผู้ดูแลยืนยันก่อน</b></li>
+        <li><b>🔔 คำขอ:</b> อนุมัติ/ปฏิเสธการสมัคร และตั้งรหัสใหม่ให้ผู้ที่ลืมรหัส (เมนูมีวงแดงบอกจำนวน)</li>
+        <li>ส่งออก/นำเข้ารายชื่อผู้ใช้เป็น JSON เพื่อย้ายไปเครื่องอื่น</li>
+      </ul>
+    </div>
+    <div><img src="manual/07-users.jpg" alt="หน้าจัดการผู้ใช้"><p class="cap">หน้าจัดการผู้ใช้</p></div>
+  </div>
+</div>
+
+<div class="card" id="s8">
+  <h2><span class="n">8</span>สำหรับอาจารย์ / นักศึกษา</h2>
+  <div class="two">
+    <div>
+      <ol>
+        <li>เข้าสู่ระบบด้วยบัญชีที่ได้รับ (เช่น <code>t10</code> หรือ <code>g1-1</code>)</li>
+        <li>ระบบเปิดหน้า <b>ตารางสอนของฉัน</b> / <b>ตารางเรียนของฉัน</b> ทันที และแสดงรายการวิชาของตัวเองด้านล่าง</li>
+        <li>ส่งออก Excel / CSV / PDF หรือสร้าง QR ได้เฉพาะตารางของตัวเอง</li>
+        <li>นักศึกษาชั้นปีที่ 4 จะเห็นข้อความ "ฝึกปฏิบัติการสอนในสถานศึกษาตลอดภาคเรียน"</li>
+      </ol>
+    </div>
+    <div><img src="manual/08-teacher.jpg" alt="มุมมองอาจารย์"><p class="cap">มุมมองของอาจารย์: เห็นเฉพาะวิชาที่สอน</p></div>
+  </div>
+</div>
+
+<div class="card" id="s9">
+  <h2><span class="n">9</span>ปัญหาที่พบบ่อย</h2>
+  <table>
+    <tr><th>อาการ</th><th>วิธีแก้</th></tr>
+    <tr><td>กดเลือกไฟล์แล้วขึ้น "โหลดไลบรารีอ่าน Excel ไม่ได้"</td><td>ตรวจอินเทอร์เน็ต แล้วรีเฟรชหน้า (Ctrl+F5)</td></tr>
+    <tr><td>ปุ่ม "ยืนยันและบันทึกข้อมูล" กดไม่ได้</td><td>มีข้อ ⛔ ในผลตรวจข้อมูล ทำตาม "วิธีแก้" ที่บอกไว้ หรือแก้การตั้งค่า</td></tr>
+    <tr><td>จัดตารางแล้วยังขาดบางคาบ</td><td>เพิ่มจำนวนรอบ หรือกดสุ่ม seed แล้วจัดใหม่ ดูรายวิชาที่ค้างในกล่องบันทึกด้านล่างตารางเปรียบเทียบ</td></tr>
+    <tr><td>ลากวิชาแล้ววางไม่ได้</td><td>ช่องเป็นสีแดงแปลว่าชน ชี้ค้างเพื่อดูเหตุผล</td></tr>
+    <tr><td>พิมพ์ PDF แล้วไม่มีสี</td><td>ติ๊ก Background graphics ในหน้าต่างพิมพ์</td></tr>
+    <tr><td>สแกน QR แล้วเปิดไม่ได้</td><td>ต้องเปิดระบบผ่านลิงก์ GitHub Pages ไม่ใช่ไฟล์ในเครื่อง</td></tr>
+    <tr><td>บัญชีที่สร้างไว้ไม่มีในอีกเครื่อง</td><td>บัญชีเก็บในเบราว์เซอร์ของแต่ละเครื่อง ใช้ "ส่งออก/นำเข้ารายชื่อผู้ใช้ (JSON)"</td></tr>
+    <tr><td>ลืมรหัสผู้ดูแลระบบ</td><td>ให้ผู้ดูแลอีกคนตั้งรหัสใหม่ หรือล้างข้อมูลเว็บไซต์ในเบราว์เซอร์เพื่อกลับไปใช้ admin / admin1234</td></tr>
+  </table>
+  <div class="note">ความปลอดภัย: รหัสผ่านเก็บเป็น SHA-256 + salt (ไม่เก็บรหัสจริง) · การตรวจสิทธิ์ทำในเบราว์เซอร์ หากใช้งานจริงควรต่อฐานข้อมูลออนไลน์ที่ตรวจสิทธิ์ฝั่งเซิร์ฟเวอร์ (เช่น Supabase RLS)</div>
+</div>
+
+</div>
+</body>
+</html>

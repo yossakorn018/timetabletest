@@ -121,7 +121,8 @@
         if (code) {
           let parsed = parseCredit(credit);
           if (isEmpty(no) && parent) { parsed = parent.credit; cat = parent.cat; }
-          if (!parsed) { warnings.push({ level: "error", msg: `ปี ${year} ${code}: อ่านหน่วยกิต "${credit}" ไม่ได้`, fix: "ตรวจรูปแบบ เช่น 3(2-2-5)" }); continue; }
+          if (!parsed) { warnings.push({ level: "error", msg: `ปี ${year} ${code}: อ่านหน่วยกิต "${credit}" ไม่ได้`, fix: "ตรวจรูปแบบในคอลัมน์ D เช่น 3(2-2-5)" }); continue; }
+          if (!name) warnings.push({ level: "error", msg: `ปี ${year} รหัส ${code}: ไม่มีชื่อรายวิชา`, fix: "ใส่ชื่อรายวิชาในคอลัมน์ C ของแถวนี้" });
           current = { year, code, name, credit: parsed, cat, kindCat: catOf(cat),
             teachers: isEmpty(tname) ? [] : [teacher(tname, star)], combinedHours: null, set: null };
           if (current.kindCat === "elective") {
@@ -137,6 +138,23 @@
       }
     });
 
+    // ตรวจภาพรวมของไฟล์
+    if (!courses.length) warnings.push({ level: "error", msg: "ไม่พบรายวิชาในไฟล์ (ไฟล์ว่างหรือรูปแบบไม่ตรงแม่แบบ)",
+      fix: "ใช้ไฟล์ตามแม่แบบ: แยกชีตตามชั้นปี ข้อมูลเริ่มแถวที่ 3 คอลัมน์ B = รหัสวิชา, C = ชื่อวิชา, D = หน่วยกิต (กด ⬇ ไฟล์แม่แบบ)" });
+    sheets.forEach((sh, si) => {
+      const m = /(\d)/.exec(sh.name), y = m ? +m[1] : si + 1;
+      if (courses.length && !courses.some(c => c.year === y)) warnings.push({ level: "warn", msg: `ชีต "${sh.name}" ไม่มีรายวิชา`, fix: "ตรวจว่าใส่ข้อมูลในชีตนี้ครบหรือไม่ ถ้าตั้งใจเว้นไว้ ข้ามได้" });
+    });
+    const seen = {};
+    courses.forEach(c => { const k = c.year + "|" + c.code; seen[k] = (seen[k] || 0) + 1; });
+    Object.entries(seen).filter(([, n]) => n > 1).forEach(([k, n]) => {
+      const [y, code] = k.split("|");
+      warnings.push({ level: "error", msg: `รหัสวิชา ${code} ซ้ำ ${n} แถวในชั้นปีที่ ${y} (จะถูกจัดซ้ำ ${n} ครั้ง)`,
+        fix: "ลบแถวที่ซ้ำ หรือแก้รหัสให้ถูก — ถ้าเป็นผู้สอนร่วม ให้ใส่ชื่อผู้สอนคนที่ 2 ในแถวถัดไปโดยเว้นรหัสวิชาว่าง" });
+    });
+    courses.filter(c => !c.teachers.length && !cfg.noScheduleYears.includes(c.year)).forEach(c =>
+      warnings.push({ level: "error", msg: `${c.code} ${c.name || ""}: ไม่มีผู้สอน`, fix: "ใส่ชื่ออาจารย์ผู้สอนในคอลัมน์ F ของแถววิชานี้" }));
+
     // ครู
     const mgrKeys = new Set(cfg.managers.map(nameKey));
     const tlist = [...teachers.entries()].sort((a, b) => a[1].name < b[1].name ? -1 : 1);
@@ -147,7 +165,8 @@
       if (mgr !== t.star) warnings.push({ level: "warn", msg: `${t.name}: รายชื่อผู้บริหารในคำชี้แจงไม่ตรงกับเครื่องหมาย * ในไฟล์`, fix: "ตรวจรายชื่อผู้บริหารในการตั้งค่า" });
       return { id: tid[k], name: t.name, role: mgr ? "Manager" : "Teacher" };
     });
-    for (const k of mgrKeys) if (!teachers.has(k)) warnings.push({ level: "warn", msg: `ผู้บริหาร "${k}" ไม่มีในรายวิชา`, fix: "ตรวจการสะกดชื่อในการตั้งค่า" });
+    const missMgr = [...mgrKeys].filter(k => !teachers.has(k));
+    if (courses.length && missMgr.length) warnings.push({ level: "warn", msg: `ผู้บริหารที่ไม่พบในรายวิชา: ${missMgr.join(", ")}`, fix: "ตรวจการสะกดชื่อในการตั้งค่า (managers) — ถ้าผู้บริหารคนนั้นไม่ได้สอนเทอมนี้ ข้ามได้" });
 
     // กลุ่ม
     const groups = [];
@@ -235,7 +254,6 @@
         if (!seenSet.has(s.set)) { seenSet.add(s.set); s.groups.forEach(g => gh[g] = (gh[g] || 0) + s.hours); }
       } else s.groups.forEach(g => gh[g] = (gh[g] || 0) + s.hours);
       s.teachers.forEach(t => th[t] = (th[t] || 0) + s.hours);
-      if (!s.teachers.length) out.push({ level: "error", msg: `${s.subject} ${s.name}: ไม่มีผู้สอน`, fix: "ใส่ชื่อผู้สอนในไฟล์" });
       if (s.anyComputer) {
         const size = s.groups.reduce((a, g) => a + data.groups.find(x => x.id === g).size, 0);
         if (!cfg.computerRooms.some(r => r.cap >= size)) out.push({ level: "error", msg: `${s.subject} กลุ่ม ${s.groups}: นักศึกษา ${size} คน เกินจำนวนเครื่องคอม`, fix: "เพิ่มห้องคอมหรือแบ่งกลุ่ม" });
@@ -255,7 +273,7 @@
     const sets = {};
     data.sections.filter(s => s.set).forEach(s => (sets[s.set] = sets[s.set] || []).push(s));
     for (const [id, ss] of Object.entries(sets)) {
-      const students = data.groups.filter(g => g.year === ss[0].year).reduce((a, g) => a + g.size, 0);
+      const students = ss[0].groups.reduce((a, gid) => a + (data.groups.find(g => g.id === gid) || { size: 0 }).size, 0);
       if (students > ss.length * cfg.electiveCap) out.push({ level: "error", msg: `ชุดวิชาเลือก ${id}: นักศึกษา ${students} คน แต่รับได้ ${ss.length * cfg.electiveCap}`, fix: "เพิ่มรายวิชาหรือเพิ่มจำนวนรับ" });
       const facs = ss.flatMap(s => s.rooms);
       if (new Set(facs).size !== facs.length) out.push({ level: "error", msg: `ชุดวิชาเลือก ${id}: มีสนามซ้ำกันในชุดที่ต้องเรียนพร้อมกัน`, fix: "ตรวจการจับคู่สนาม" });
@@ -398,6 +416,7 @@
         const L = plan[ci];
         let best = null;
         for (let d = 0; d < st.tm.D; d++) for (let p = 1; p <= st.tm.P; p++) {
+          if (plan.length > 1 && usedDays.has(d)) continue;   // วิชาที่แบ่งช่วง ต้องอยู่คนละวัน
           const pl = canPlace(st, cfg, task, d, p, L, rng);
           if (!pl) continue;
           if (opts.firstFit) { best = { pl, d, pen: 0 }; break; }

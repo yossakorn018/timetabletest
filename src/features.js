@@ -87,7 +87,8 @@
 
   // ---------- 2) ลากย้ายวิชา ----------
   let drag = null;
-  S.undo = []; S.moves = [];
+  const movesOf = () => (S.current.moves = S.current.moves || []);
+  const undoOf = () => (S.current.undo = S.current.undo || []);
   function chunkRows(d) {
     return S.current.rows.filter(r => (r.set || r.section) === d.key && r.slot >= d.start && r.slot < d.start + d.len);
   }
@@ -163,27 +164,72 @@
     if (!res.ok) { if (!silent) toast("ย้ายไม่ได้: " + res.reasons.join(", "), "err"); return false; }
     const P = S.cfg.periods, delta = newStart - d.start;
     const chunk = chunkRows(d);
-    S.undo.push(chunk.map(r => [r, r.slot]));
+    undoOf().push(chunk.map(r => [r, r.slot]));
     chunk.forEach(r => { r.slot += delta; r.day = S.cfg.days[Math.floor(r.slot / P)]; r.period = r.slot % P + 1; });
     S.current.rows.sort((a, b) => a.slot - b.slot || a.section.localeCompare(b.section));
-    S.moves.push([d.key, d.start, d.len, delta]);
+    movesOf().push([d.key, d.start, d.len, delta]);
     S.current.v = TT.validate(S.data, S.cfg, S.current.rows);
     S.current.edited = true;
     if (!silent) {
-      renderView(); renderValidation();
+      S.persist(); renderView(); renderValidation();
       toast(`ย้ายแล้ว · ตรวจผล ${S.current.v.passed}/${S.current.v.total} เงื่อนไข`, S.current.v.passed === S.current.v.total ? "ok" : "err");
     }
     return true;
   }
   $("#undoBtn").onclick = () => {
-    const last = S.undo.pop();
+    const last = S.current && undoOf().pop();
     if (!last) return toast("ไม่มีการย้ายให้ย้อนกลับ", "err");
     const P = S.cfg.periods;
     last.forEach(([r, slot]) => { r.slot = slot; r.day = S.cfg.days[Math.floor(slot / P)]; r.period = slot % P + 1; });
-    S.moves.pop();
+    movesOf().pop(); S.persist();
     S.current.v = TT.validate(S.data, S.cfg, S.current.rows);
     renderView(); renderValidation(); toast("ย้อนกลับแล้ว", "ok");
   };
+
+  // ---------- บันทึก/กู้คืนตาราง (seed + การย้ายด้วยมือ) ----------
+  // ตารางคำนวณซ้ำได้จาก seed เสมอ จึงเก็บแค่ seed กับรายการย้าย ไม่ต้องเก็บทั้งตาราง
+  S.fingerprint = () => S.sha256(JSON.stringify(S.sheets) + "|" + (S.scale || 1) + "|" + JSON.stringify(S.cfg));
+  S.persist = () => {
+    if (!S.current || !S.data) return;
+    try {
+      localStorage.setItem("tt_sched", JSON.stringify({ fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH") }));
+    } catch (e) { /* ignore */ }
+  };
+  S.restoreSaved = () => {
+    let sv = null;
+    try { sv = JSON.parse(localStorage.getItem("tt_sched") || "null"); } catch (e) { /* ignore */ }
+    if (!sv || sv.fp !== S.fingerprint()) return false;
+    const r = TT.solveOnce(S.data, S.cfg, sv.seed);
+    S.current = r;
+    r.moves = []; r.undo = [];
+    let bad = 0;
+    (sv.moves || []).forEach(([key, start, len, delta]) => { if (!applyMove({ key, start, len }, start + delta, true)) bad++; });
+    r.undo = [];   // ประวัติย้อนกลับเริ่มใหม่หลังกู้คืน
+    r.v = TT.validate(S.data, S.cfg, r.rows);
+    r.ms = 0; r.rounds = 1; r.seed0 = sv.seed; r.at = sv.at + " (กู้คืน)"; r.restored = true;
+    const tb = performance.now(); const base = TT.solveBaseline(S.data, S.cfg); base.ms = performance.now() - tb;
+    base.v = TT.validate(S.data, S.cfg, base.rows); S.baseline = base;
+    S.runs = [r];
+    $("#status").textContent = `กู้คืนตารางที่บันทึกไว้เมื่อ ${sv.at}: seed ${sv.seed}, ย้ายด้วยมือ ${r.moves.length} ครั้ง — ผ่าน ${r.v.passed}/${r.v.total} เงื่อนไข${bad ? ` (ข้ามการย้ายที่ใช้ไม่ได้ ${bad} รายการ)` : ""}`;
+    return true;
+  };
+
+  // ---------- ชุดข้อมูลตัวอย่าง เล็ก / กลาง / ใหญ่ ----------
+  document.querySelectorAll("[data-sample]").forEach(b => b.onclick = () => {
+    if (!window.SAMPLE) return toast("ไม่มีชุดข้อมูลตัวอย่างในไฟล์นี้", "err");
+    const k = b.dataset.sample;
+    S.cfgBase = S.cfgBase || S.cfg;
+    S.cfg = S.cfgBase; S.scale = 1;
+    S.sheets = k === "small" ? window.SAMPLE.filter(sh => /1/.test(sh.name)) : window.SAMPLE;
+    S.draft = TT.parseWorkbook(S.sheets, S.cfg);
+    if (k === "large") {
+      const sc = TT.scaleData(S.draft, S.cfg, 3);
+      S.scale = 3; S.draft = sc.data; S.cfg = sc.cfg;
+    }
+    $("#fileName").textContent = { small: "ตัวอย่างเล็ก: ชั้นปีที่ 1 อย่างเดียว (4 กลุ่ม)", medium: "ตัวอย่างกลาง: ข้อมูลโจทย์ครบ (11 กลุ่ม)", large: "ตัวอย่างใหญ่: ข้อมูลโจทย์ ×3 วิทยาเขต (33 กลุ่ม)" }[k];
+    S.parseDraft(true);
+    toast("โหลด" + b.textContent.trim() + " แล้ว ตรวจข้อมูลด้านล่าง", "ok");
+  });
 
   // ---------- 4) หลักฐานเชิงตัวเลข ----------
   const METHODS = [
@@ -269,7 +315,7 @@
   function shareURL(type, id) {
     const base = location.href.split("?")[0].split("#")[0].replace(/[^/]*$/, "") + "index_with_data.html";
     const q = new URLSearchParams({ m: "1", seed: S.current.seed, t: type, id });
-    if (S.moves.length) q.set("mv", S.moves.map(m => m.join("~")).join(","));
+    if (movesOf().length) q.set("mv", movesOf().map(m => m.join("~")).join(","));
     return base + "?" + q.toString();
   }
   function qrSVG(text, cell) {
@@ -304,7 +350,7 @@
     S.data = TT.parseWorkbook(S.sheets, S.cfg);
     S.check = TT.inputCheck(S.data, S.cfg);
     const r = TT.solveOnce(S.data, S.cfg, seed);
-    S.current = r;
+    S.current = r; r.moves = []; r.undo = [];
     (params.get("mv") || "").split(",").filter(Boolean).forEach(m => {
       const [key, start, len, delta] = m.split("~");
       applyMove({ key, start: +start, len: +len }, +start + +delta, true);

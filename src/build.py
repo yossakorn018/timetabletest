@@ -9,7 +9,11 @@ html = (d / "body.html").read_text(encoding="utf-8")
 html = html.replace("/*CSS*/", (d / "app.css").read_text(encoding="utf-8"))
 html = html.replace("/*ENGINE*/", (d / "engine.js").read_text(encoding="utf-8"))
 (d / "dist").mkdir(exist_ok=True)
-app = (d / "app.js").read_text(encoding="utf-8").replace("/*FEATURES*/", (d / "features.js").read_text(encoding="utf-8")).replace("/*AUTH*/", (d / "auth.js").read_text(encoding="utf-8"))
+sample_js = ""
+sp = d / "sample.json"
+if sp.exists():
+    sample_js = "window.SAMPLE=" + sp.read_text(encoding="utf-8") + ";\n"
+app = sample_js + (d / "app.js").read_text(encoding="utf-8").replace("/*FEATURES*/", (d / "features.js").read_text(encoding="utf-8")).replace("/*AUTH*/", (d / "auth.js").read_text(encoding="utf-8"))
 (d / "dist" / "index.html").write_text(html.replace("/*APP*/", app), encoding="utf-8")
 print("built dist/index.html")
 
