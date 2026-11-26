@@ -4,98 +4,212 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ระบบจัดตารางเรียน-สอนอัตโนมัติ คณะศึกษาศาสตร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<style>:root { --pri: #1f5fbf; --bg: #f5f7fb; --line: #dde3ee; --text: #1d2433; --muted: #6b7489; }
+<style>:root {
+  --pri: #2563eb; --pri2: #7c3aed; --pri-soft: #eef3ff;
+  --bg: #f4f6fb; --card: #ffffff; --line: #e3e8f2; --text: #1e2533; --muted: #6b7489;
+  --ok: #16a34a; --err: #dc2626; --warn: #d97706;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.06);
+  /* สีประเภทวิชา: พื้น / เส้นนำ */
+  --theory: #e8f0ff;   --theory-b: #3b82f6;
+  --computer: #e0f7f3; --computer-b: #0d9488;
+  --sport: #fff1dc;    --sport-b: #f59e0b;
+  --combined: #f1e9ff; --combined-b: #8b5cf6;
+  --elective: #ffe8f1; --elective-b: #ec4899;
+}
 * { box-sizing: border-box; }
-body { margin: 0; font-family: "Sarabun", "Leelawadee UI", "Tahoma", sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
-header { background: var(--pri); color: #fff; padding: 14px 24px; }
-header h1 { margin: 0; font-size: 21px; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: "Sarabun", "Leelawadee UI", Tahoma, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+h1, h2, h3, nav button, .card b { font-family: "Prompt", "Sarabun", sans-serif; }
+
+/* ---------- ส่วนหัว ---------- */
+header { background: linear-gradient(120deg, var(--pri), var(--pri2)); color: #fff; padding: 18px 28px 22px; position: relative; overflow: hidden; }
+header::after { content: ""; position: absolute; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255,255,255,.08); }
+header h1 { margin: 0; font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
 header p { margin: 4px 0 0; opacity: .85; font-size: 14px; }
-nav { display: flex; gap: 4px; padding: 0 24px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
-nav button { border: 0; background: none; padding: 12px 14px; cursor: pointer; font: inherit; color: var(--muted); border-bottom: 3px solid transparent; }
-nav button.active { color: var(--pri); border-bottom-color: var(--pri); font-weight: 600; }
-main { padding: 16px 24px 60px; }
-h2 { margin: 6px 0 12px; font-size: 19px; }
-h3 { font-size: 16px; margin: 18px 0 8px; }
+
+/* ---------- แถบขั้นตอน ---------- */
+nav { display: flex; gap: 6px; padding: 10px 24px; background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
+nav button { border: 0; background: transparent; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-size: 14.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; transition: background .2s, color .2s, transform .1s; }
+nav button .num { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 12px; background: var(--line); color: var(--muted); transition: .2s; }
+nav button:hover { background: var(--pri-soft); color: var(--pri); }
+nav button.active { background: var(--pri); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+nav button.active .num { background: rgba(255,255,255,.25); color: #fff; }
+nav button.done:not(.active) .num { background: var(--ok); color: #fff; }
+nav button:active { transform: scale(.96); }
+
+main { padding: 20px 28px 70px; max-width: 1500px; margin: 0 auto; }
+section.tab { animation: fadeUp .35s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+h2 { margin: 4px 0 14px; font-size: 20px; font-weight: 600; }
+h3 { font-size: 16px; margin: 22px 0 10px; font-weight: 500; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .muted { color: var(--muted); }
-button { font: inherit; padding: 7px 14px; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
-button:hover:not(:disabled) { border-color: var(--pri); }
-button:disabled { opacity: .5; cursor: not-allowed; }
-button.primary { background: var(--pri); color: #fff; border-color: var(--pri); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 14px; }
+
+/* ---------- ปุ่ม ---------- */
+button { font: inherit; padding: 8px 16px; border: 1px solid var(--line); border-radius: 9px; background: #fff; cursor: pointer; color: var(--text);
+  position: relative; overflow: hidden; transition: transform .12s, box-shadow .2s, border-color .2s, background .2s; }
+button:hover:not(:disabled) { border-color: var(--pri); box-shadow: 0 3px 10px rgba(37,99,235,.15); transform: translateY(-1px); }
+button:active:not(:disabled) { transform: translateY(0) scale(.97); box-shadow: none; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; border: 0; font-weight: 500; }
+button.primary:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(124,58,237,.35); }
 button.ghost { background: transparent; }
-button.small { padding: 3px 8px; font-size: 13px; }
-input, select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+button.small { padding: 4px 10px; font-size: 13px; }
+button.loading { pointer-events: none; }
+button.loading::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border: 2px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ripple { position: absolute; border-radius: 50%; transform: scale(0); background: rgba(255,255,255,.5); animation: ripple .55s ease-out; pointer-events: none; }
+button:not(.primary) .ripple { background: rgba(37,99,235,.18); }
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pri); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
 input[type=number] { width: 100px; }
-.filebtn { display: inline-block; background: var(--pri); color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+label { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------- นำเข้าไฟล์ ---------- */
+.drop { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border: 2px dashed #c7d2fe; background: linear-gradient(135deg, #f5f8ff, #faf5ff); border-radius: var(--radius); padding: 22px; transition: border-color .2s, background .2s; }
+.drop.over { border-color: var(--pri); background: var(--pri-soft); }
+.drop .ico { font-size: 34px; }
+.filebtn { display: inline-block; background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; padding: 9px 18px; border-radius: 9px; cursor: pointer; transition: transform .12s, box-shadow .2s; }
+.filebtn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(124,58,237,.35); }
+.filebtn:active { transform: scale(.97); }
 .filebtn input { display: none; }
-details { margin: 14px 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
-summary { cursor: pointer; font-weight: 600; }
-textarea { width: 100%; height: 320px; font-family: Consolas, monospace; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 6px 0; }
-.cards { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
-.card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; min-width: 130px; }
-.card b { display: block; font-size: 24px; color: var(--pri); }
+details { margin: 14px 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; }
+summary { cursor: pointer; font-weight: 500; }
+textarea { width: 100%; height: 320px; font-family: Consolas, monospace; font-size: 12.5px; border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin: 8px 0; }
+
+/* ---------- การ์ดตัวเลข ---------- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 6px 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(var(--pri), var(--pri2)); }
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,24,40,.1); }
+.card b { display: block; font-size: 26px; font-weight: 600; background: linear-gradient(135deg, var(--pri), var(--pri2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .card span { font-size: 13px; color: var(--muted); }
-.card.okc b { color: #1b8a4a; } .card.errc b { color: #c4302b; }
+.card.okc::before { background: var(--ok); } .card.okc b { background: none; color: var(--ok); }
+.card.errc::before { background: var(--err); } .card.errc b { background: none; color: var(--err); }
+
+/* ---------- รายการผลตรวจ ---------- */
 .issues { list-style: none; padding: 0; margin: 6px 0; }
-.issues > li { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 6px; padding: 7px 12px; margin: 5px 0; }
-.issues li.error { border-left-color: #c4302b; } .issues li.warn { border-left-color: #e0a100; }
-.issues li.info { border-left-color: var(--pri); } .issues li.ok { border-left-color: #1b8a4a; }
-.issues ul { margin: 4px 0 0; font-size: 13.5px; }
-table.list { border-collapse: collapse; background: #fff; width: 100%; font-size: 13.5px; }
-table.list th, table.list td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
-table.list th { background: #eef2f9; }
-table.list tr.sel { background: #e8f0ff; }
-td.good { color: #1b8a4a; font-weight: 600; }
-.two { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.issues > li { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 9px; padding: 9px 14px; margin: 6px 0; animation: fadeUp .3s ease both; }
+.issues > li:nth-child(2) { animation-delay: .03s; } .issues > li:nth-child(3) { animation-delay: .06s; } .issues > li:nth-child(4) { animation-delay: .09s; }
+.issues > li:nth-child(5) { animation-delay: .12s; } .issues > li:nth-child(6) { animation-delay: .15s; } .issues > li:nth-child(n+7) { animation-delay: .18s; }
+.issues li.error { border-left-color: var(--err); background: #fff7f7; } .issues li.warn { border-left-color: var(--warn); background: #fffbf2; }
+.issues li.info { border-left-color: var(--pri); } .issues li.ok { border-left-color: var(--ok); background: #f4fbf6; }
+.issues small { color: var(--muted); }
+.issues ul { margin: 6px 0 0; font-size: 13.5px; color: #7f1d1d; }
+
+/* ---------- ตาราง ---------- */
+table.list { border-collapse: separate; border-spacing: 0; background: #fff; width: 100%; font-size: 13.5px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+table.list th, table.list td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+table.list th { background: #f3f6fc; font-weight: 600; color: #3a4357; position: sticky; top: 0; }
+table.list tr:last-child td { border-bottom: 0; }
+table.list tr:hover td { background: #f8faff; }
+table.list tr.sel td { background: #eaf1ff; }
+td.good { color: var(--ok); font-weight: 700; }
+.two { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
 .two > div:first-child { width: 260px; } .grow { flex: 1; min-width: 320px; }
-.scroll { max-height: 520px; overflow: auto; }
+.scroll { max-height: 520px; overflow: auto; border-radius: 10px; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
-.progress { height: 10px; background: #e3e8f2; border-radius: 6px; overflow: hidden; margin-top: 8px; }
-.progress div { height: 100%; width: 0; background: var(--pri); transition: width .2s; }
-pre { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-size: 12.5px; max-height: 220px; overflow: auto; white-space: pre-wrap; }
-.how ol { margin: 8px 0 0; padding-left: 20px; line-height: 1.6; }
-.tag { padding: 1px 7px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
-table.grid { border-collapse: collapse; background: #fff; min-width: 1000px; width: 100%; table-layout: fixed; }
-table.grid th, table.grid td { border: 1px solid #c9d2e3; padding: 4px; font-size: 12px; text-align: center; vertical-align: middle; }
-table.grid th { background: #eef2f9; }
-table.grid tr > th:first-child { width: 80px; }
-table.grid td { height: 74px; }
-td.cell b, td.cell span, td.cell small { display: block; line-height: 1.3; }
-td.cell small { color: #4a5368; font-size: 11px; }
-td.locked { background: repeating-linear-gradient(45deg, #f1f1f1, #f1f1f1 6px, #e6e6e6 6px, #e6e6e6 12px); color: #777; }
-td.unav { background: #fde9e7; color: #b34a42; }
-.k-theory { background: #e8f0ff; } .k-computer { background: #e6f6f4; } .k-sport { background: #fff1dc; }
-.k-combined { background: #f0e8ff; } .k-elective { background: #fde8f1; }
-.hbar { height: 10px; background: var(--pri); border-radius: 4px; min-width: 2px; }
-#toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 8px; background: #333; color: #fff; opacity: 0; transition: .3s; pointer-events: none; }
-#toast.show { opacity: 1; } #toast.ok { background: #1b8a4a; } #toast.err { background: #c4302b; }
+
+/* ---------- แถบความคืบหน้า ---------- */
+.progress { height: 12px; background: #e6ebf5; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+.progress div { height: 100%; width: 0; border-radius: 999px; transition: width .25s;
+  background: linear-gradient(90deg, var(--pri), var(--pri2)), repeating-linear-gradient(45deg, rgba(255,255,255,.2) 0 10px, transparent 10px 20px);
+  background-blend-mode: overlay; background-size: 100% 100%, 28px 28px; animation: stripes 1s linear infinite; }
+@keyframes stripes { to { background-position: 0 0, 28px 0; } }
+pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; max-height: 220px; overflow: auto; white-space: pre-wrap; }
+.how ol { margin: 8px 0 0; padding-left: 20px; line-height: 1.7; }
+.tag { padding: 2px 9px; border-radius: 999px; font-size: 12px; white-space: nowrap; border: 1px solid transparent; }
+.tag.k-theory { border-color: var(--theory-b); color: #1d4ed8; } .tag.k-computer { border-color: var(--computer-b); color: #0f766e; }
+.tag.k-sport { border-color: var(--sport-b); color: #b45309; } .tag.k-combined { border-color: var(--combined-b); color: #6d28d9; }
+.tag.k-elective { border-color: var(--elective-b); color: #be185d; }
+
+/* ---------- ตารางเรียน (grid) ---------- */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 4px 0 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; border-left: 4px solid; }
+.gridwrap { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px; overflow: auto; }
+table.grid { border-collapse: separate; border-spacing: 4px; min-width: 1000px; width: 100%; table-layout: fixed; }
+table.grid th { background: #f3f6fc; border-radius: 8px; padding: 6px 4px; font-size: 13px; font-weight: 600; color: #3a4357; }
+table.grid th small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+table.grid tr > th:first-child { width: 84px; background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; }
+table.grid tr:first-child > th:first-child { background: #f3f6fc; color: #3a4357; }
+table.grid td { height: 82px; border-radius: 8px; padding: 6px; font-size: 12px; text-align: center; vertical-align: middle; background: #fafbfd; border: 1px dashed #e6eaf2; }
+table.grid td.cell { border: 0; border-left: 5px solid; text-align: left; padding: 6px 8px; transition: transform .15s, box-shadow .15s; cursor: default; }
+table.grid td.cell:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(16,24,40,.14); position: relative; z-index: 2; }
+td.cell b { display: block; font-size: 12.5px; }
+td.cell span { display: block; font-size: 12.5px; font-weight: 500; line-height: 1.3; margin: 1px 0 3px; }
+td.cell small { display: block; color: #4a5368; font-size: 11px; line-height: 1.35; }
+table.grid td.locked { background: repeating-linear-gradient(45deg, #f3f4f6 0 6px, #eceef2 6px 12px); color: #8a909c; border: 0; font-size: 11.5px; }
+table.grid td.unav { background: #fdecec; color: #b42318; border: 0; font-size: 11.5px; }
+.k-theory, table.grid td.k-theory { background: var(--theory); border-left-color: var(--theory-b) !important; }
+.k-computer, table.grid td.k-computer { background: var(--computer); border-left-color: var(--computer-b) !important; }
+.k-sport, table.grid td.k-sport { background: var(--sport); border-left-color: var(--sport-b) !important; }
+.k-combined, table.grid td.k-combined { background: var(--combined); border-left-color: var(--combined-b) !important; }
+.k-elective, table.grid td.k-elective { background: var(--elective); border-left-color: var(--elective-b) !important; }
+.legend .k-theory, .legend .k-computer, .legend .k-sport, .legend .k-combined, .legend .k-elective { border-left-width: 4px; border-left-style: solid; }
+
+.hbar { height: 10px; border-radius: 999px; min-width: 3px; background: linear-gradient(90deg, var(--pri), var(--pri2)); transform-origin: left; animation: grow .6s ease both; }
+@keyframes grow { from { transform: scaleX(0); } }
+
+#toast { position: fixed; bottom: 22px; right: 22px; padding: 12px 18px; border-radius: 10px; background: #333; color: #fff; opacity: 0; transform: translateY(12px); transition: .3s; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,.2); z-index: 50; }
+#toast.show { opacity: 1; transform: none; } #toast.ok { background: var(--ok); } #toast.err { background: var(--err); }
+
+.print-only { display: none; }
+
+/* ---------- พิมพ์ / PDF ---------- */
 @media print {
-  header, nav, .noprint, #toast { display: none !important; }
-  main { padding: 0; } section.tab { display: none; } section#view { display: block !important; }
-  .scroll { max-height: none; overflow: visible; } table.grid { min-width: 0; }
-  @page { size: A4 landscape; margin: 10mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  @page { size: A4 landscape; margin: 8mm; }
+  body { background: #fff; font-size: 12px; }
+  header, nav, .noprint, #toast, #gridTitle { display: none !important; }
+  main { padding: 0; max-width: none; }
+  section.tab { display: none !important; animation: none; }
+  section#view { display: block !important; }
+  section#view > h2 { display: none; }
+  .print-only { display: block; }
+  .print-head { display: flex; justify-content: space-between; align-items: flex-end; border-radius: 10px; padding: 10px 16px; margin-bottom: 8px;
+    background: linear-gradient(120deg, var(--pri), var(--pri2)); color: #fff; }
+  .print-head h1 { margin: 0; font-size: 18px; }
+  .print-head p { margin: 2px 0 0; font-size: 11.5px; opacity: .9; }
+  .print-head .who { text-align: right; font-size: 16px; font-weight: 600; font-family: "Prompt", sans-serif; }
+  .gridwrap { box-shadow: none; border: 0; padding: 0; overflow: visible; }
+  .scroll { max-height: none; overflow: visible; }
+  table.grid { min-width: 0; border-spacing: 3px; }
+  table.grid td { height: 92px; }
+  table.grid td.cell:hover { transform: none; box-shadow: none; }
+  td.cell span { font-size: 11.5px; } td.cell small { font-size: 10px; }
+  .legend { margin: 6px 0 0; font-size: 11px; }
+  .print-foot { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 6px; }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
+  <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
   <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
 </header>
 <nav>
-  <button data-tab="import">1. นำเข้าข้อมูล</button>
-  <button data-tab="solve">2. จัดตาราง</button>
-  <button data-tab="check">3. ตรวจผล</button>
-  <button data-tab="view">4. ดูตาราง/ส่งออก</button>
-  <button data-tab="report">5. รายงาน</button>
+  <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
+  <button data-tab="solve"><span class="num">2</span>จัดตาราง</button>
+  <button data-tab="check"><span class="num">3</span>ตรวจผล</button>
+  <button data-tab="view"><span class="num">4</span>ดูตาราง/ส่งออก</button>
+  <button data-tab="report"><span class="num">5</span>รายงาน</button>
 </nav>
 <main>
 <section class="tab" id="import">
   <h2>นำเข้าไฟล์รายวิชา (Excel)</h2>
   <p class="muted">รองรับไฟล์ .xlsx/.xls ที่แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
-  <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
-  <button id="tplBtn" class="ghost">ดาวน์โหลดไฟล์แม่แบบ</button>
-  <span id="fileName" class="muted"></span>
+  <div class="drop" id="drop">
+    <div class="ico">📂</div>
+    <div><b>ลากไฟล์ Excel มาวางที่นี่</b><br><span id="fileName" class="muted">หรือกดปุ่มเพื่อเลือกไฟล์ (.xlsx)</span></div>
+    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
+    <button id="tplBtn" class="ghost">⬇ ไฟล์แม่แบบ</button>
+  </div>
   <details>
     <summary>ตั้งค่าเงื่อนไขจากคำชี้แจง (กลุ่ม ห้อง สนาม เวลา ผู้บริหาร)</summary>
     <p class="muted">แก้เป็น JSON ได้ทุกค่า ระบบไม่ได้เขียนข้อมูลตายตัวในโค้ด</p>
@@ -160,7 +274,13 @@ td.unav { background: #fde9e7; color: #b34a42; }
     <button id="printBtn">พิมพ์ / PDF</button>
   </div>
   <h3 id="gridTitle"></h3>
-  <div id="gridBox" class="scroll"></div>
+  <div class="print-only print-head"><div><h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่</h1>
+    <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p></div><div class="who" id="printWho"></div></div>
+  <div class="gridwrap"><div id="gridBox"></div>
+    <div class="legend"><span><i class="k-theory"></i>ทฤษฎี</span><span><i class="k-computer"></i>ห้องคอมพิวเตอร์</span>
+      <span><i class="k-sport"></i>ทักษะกีฬา (ห้องเรียน+สนาม)</span><span><i class="k-combined"></i>เรียนรวมทั้งชั้นปี</span>
+      <span><i class="k-elective"></i>วิชาเลือก</span></div></div>
+  <div class="print-only print-foot"><span id="printInfo"></span><span>พิมพ์จากระบบจัดตารางอัตโนมัติ</span></div>
 </section>
 
 <section class="tab" id="report" hidden>
@@ -800,6 +920,21 @@ td.unav { background: #fde9e7; color: #b34a42; }
     if (id === "view") renderView();
     if (id === "report") renderReport();
   }
+  // เอฟเฟกต์คลื่นตอนกดปุ่ม
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest("button, .filebtn");
+    if (!b || b.disabled) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height);
+    const sp = document.createElement("span");
+    sp.className = "ripple";
+    sp.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    b.appendChild(sp);
+    setTimeout(() => sp.remove(), 600);
+  });
+  function markDone() {
+    const done = { import: !!S.data, solve: !!S.current, check: !!(S.current && S.current.v.passed === S.current.v.total), view: !!S.current, report: !!S.current };
+    document.querySelectorAll("nav button").forEach(b => b.classList.toggle("done", !!done[b.dataset.tab]));
+  }
   function toast(msg, kind) {
     const t = $("#toast"); t.textContent = msg; t.className = "show " + (kind || "");
     clearTimeout(t._h); t._h = setTimeout(() => t.className = "", 3500);
@@ -828,8 +963,12 @@ td.unav { background: #fde9e7; color: #b34a42; }
   };
 
   // ---------- 1) นำเข้า ----------
-  $("#file").onchange = async (e) => {
-    const f = e.target.files[0];
+  $("#file").onchange = (e) => loadFile(e.target.files[0]);
+  const drop = $("#drop");
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+  async function loadFile(f) {
     if (!f) return;
     if (typeof XLSX === "undefined") { toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err"); return; }
     try {
@@ -837,8 +976,9 @@ td.unav { background: #fde9e7; color: #b34a42; }
       S.sheets = wb.SheetNames.map(n => ({ name: n, rows: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: null, blankrows: true }) }));
       $("#fileName").textContent = `${f.name} — ${wb.SheetNames.length} ชีต (${wb.SheetNames.join(", ")})`;
       parseDraft();
+      toast("อ่านไฟล์สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
     } catch (err) { toast("อ่านไฟล์ไม่ได้: " + err.message, "err"); }
-  };
+  }
 
   function parseDraft() {
     S.draft = TT.parseWorkbook(S.sheets, S.cfg);
@@ -880,6 +1020,7 @@ td.unav { background: #fde9e7; color: #b34a42; }
     renderIssues(S.check, "#issues2");
     $("#runBtn").disabled = false;
     toast("บันทึกข้อมูลแล้ว ไปขั้นจัดตาราง", "ok");
+    markDone();
     showTab("solve");
   };
 
@@ -890,7 +1031,7 @@ td.unav { background: #fde9e7; color: #b34a42; }
     if (!S.data) { toast("ยังไม่ได้นำเข้าข้อมูล", "err"); return; }
     const seed0 = parseInt($("#seed").value, 10) || 0, rounds = Math.max(1, parseInt($("#rounds").value, 10) || 1);
     S.cancel = false;
-    $("#runBtn").disabled = true; $("#cancelBtn").disabled = false;
+    $("#runBtn").disabled = true; $("#runBtn").classList.add("loading"); $("#cancelBtn").disabled = false;
     const bar = $("#bar"), status = $("#status");
     const t0 = performance.now();
     status.textContent = "กำลังคำนวณวิธีพื้นฐาน (baseline)...";
@@ -909,7 +1050,7 @@ td.unav { background: #fde9e7; color: #b34a42; }
       status.textContent = `รอบ ${i + 1}/${rounds} (seed ${seed0 + i}) — ดีที่สุด: ขาด ${best.unplacedHours} คาบ, โทษ ${best.penalty}`;
       if (i % 3 === 2) await new Promise(r => setTimeout(r, 0));
     }
-    $("#runBtn").disabled = false; $("#cancelBtn").disabled = true;
+    $("#runBtn").disabled = false; $("#runBtn").classList.remove("loading"); $("#cancelBtn").disabled = true;
     if (!best) { status.textContent = "ยกเลิกแล้ว"; return; }
     best.ms = performance.now() - t0;
     best.v = TT.validate(S.data, S.cfg, best.rows);
@@ -918,7 +1059,7 @@ td.unav { background: #fde9e7; color: #b34a42; }
     S.runs.unshift(best); S.current = best;
     status.textContent = (S.cancel ? "ยกเลิกระหว่างทาง ใช้ผลที่ดีที่สุดที่ได้ " : "เสร็จแล้ว ") +
       `seed ${best.seed}: ผ่าน ${best.v.passed}/${best.v.total} เงื่อนไข, ชน ${best.v.conflicts}, ขาด ${best.unplacedHours} คาบ`;
-    renderCompare(); renderRuns(); renderValidation();
+    renderCompare(); renderRuns(); renderValidation(); markDone();
     toast(best.v.passed === best.v.total ? "จัดตารางสำเร็จ ผ่านทุกเงื่อนไข" : "จัดได้บางส่วน ดูรายละเอียดที่หน้าตรวจผล", best.v.passed === best.v.total ? "ok" : "err");
   };
   function renderCompare() {
@@ -1023,6 +1164,8 @@ td.unav { background: #fde9e7; color: #b34a42; }
     const opt = $("#vEntity").selectedOptions[0];
     $("#gridTitle").textContent = `ตาราง${{ group: "เรียน", teacher: "สอน", room: "การใช้พื้นที่" }[type]}: ${opt ? opt.textContent : id}`;
     $("#gridBox").innerHTML = gridHTML(type, id);
+    $("#printWho").textContent = $("#gridTitle").textContent;
+    $("#printInfo").textContent = `seed ${S.current.seed} · ผ่าน ${S.current.v.passed}/${S.current.v.total} เงื่อนไข · พิมพ์ ${new Date().toLocaleString("th-TH")}`;
   }
   $("#printBtn").onclick = () => window.print();
 

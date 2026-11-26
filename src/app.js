@@ -12,6 +12,21 @@
     if (id === "view") renderView();
     if (id === "report") renderReport();
   }
+  // เอฟเฟกต์คลื่นตอนกดปุ่ม
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest("button, .filebtn");
+    if (!b || b.disabled) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height);
+    const sp = document.createElement("span");
+    sp.className = "ripple";
+    sp.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    b.appendChild(sp);
+    setTimeout(() => sp.remove(), 600);
+  });
+  function markDone() {
+    const done = { import: !!S.data, solve: !!S.current, check: !!(S.current && S.current.v.passed === S.current.v.total), view: !!S.current, report: !!S.current };
+    document.querySelectorAll("nav button").forEach(b => b.classList.toggle("done", !!done[b.dataset.tab]));
+  }
   function toast(msg, kind) {
     const t = $("#toast"); t.textContent = msg; t.className = "show " + (kind || "");
     clearTimeout(t._h); t._h = setTimeout(() => t.className = "", 3500);
@@ -40,8 +55,12 @@
   };
 
   // ---------- 1) นำเข้า ----------
-  $("#file").onchange = async (e) => {
-    const f = e.target.files[0];
+  $("#file").onchange = (e) => loadFile(e.target.files[0]);
+  const drop = $("#drop");
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+  async function loadFile(f) {
     if (!f) return;
     if (typeof XLSX === "undefined") { toast("โหลดไลบรารีอ่าน Excel ไม่ได้ ตรวจอินเทอร์เน็ต", "err"); return; }
     try {
@@ -49,8 +68,9 @@
       S.sheets = wb.SheetNames.map(n => ({ name: n, rows: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: null, blankrows: true }) }));
       $("#fileName").textContent = `${f.name} — ${wb.SheetNames.length} ชีต (${wb.SheetNames.join(", ")})`;
       parseDraft();
+      toast("อ่านไฟล์สำเร็จ ตรวจข้อมูลด้านล่าง", "ok");
     } catch (err) { toast("อ่านไฟล์ไม่ได้: " + err.message, "err"); }
-  };
+  }
 
   function parseDraft() {
     S.draft = TT.parseWorkbook(S.sheets, S.cfg);
@@ -92,6 +112,7 @@
     renderIssues(S.check, "#issues2");
     $("#runBtn").disabled = false;
     toast("บันทึกข้อมูลแล้ว ไปขั้นจัดตาราง", "ok");
+    markDone();
     showTab("solve");
   };
 
@@ -102,7 +123,7 @@
     if (!S.data) { toast("ยังไม่ได้นำเข้าข้อมูล", "err"); return; }
     const seed0 = parseInt($("#seed").value, 10) || 0, rounds = Math.max(1, parseInt($("#rounds").value, 10) || 1);
     S.cancel = false;
-    $("#runBtn").disabled = true; $("#cancelBtn").disabled = false;
+    $("#runBtn").disabled = true; $("#runBtn").classList.add("loading"); $("#cancelBtn").disabled = false;
     const bar = $("#bar"), status = $("#status");
     const t0 = performance.now();
     status.textContent = "กำลังคำนวณวิธีพื้นฐาน (baseline)...";
@@ -121,7 +142,7 @@
       status.textContent = `รอบ ${i + 1}/${rounds} (seed ${seed0 + i}) — ดีที่สุด: ขาด ${best.unplacedHours} คาบ, โทษ ${best.penalty}`;
       if (i % 3 === 2) await new Promise(r => setTimeout(r, 0));
     }
-    $("#runBtn").disabled = false; $("#cancelBtn").disabled = true;
+    $("#runBtn").disabled = false; $("#runBtn").classList.remove("loading"); $("#cancelBtn").disabled = true;
     if (!best) { status.textContent = "ยกเลิกแล้ว"; return; }
     best.ms = performance.now() - t0;
     best.v = TT.validate(S.data, S.cfg, best.rows);
@@ -130,7 +151,7 @@
     S.runs.unshift(best); S.current = best;
     status.textContent = (S.cancel ? "ยกเลิกระหว่างทาง ใช้ผลที่ดีที่สุดที่ได้ " : "เสร็จแล้ว ") +
       `seed ${best.seed}: ผ่าน ${best.v.passed}/${best.v.total} เงื่อนไข, ชน ${best.v.conflicts}, ขาด ${best.unplacedHours} คาบ`;
-    renderCompare(); renderRuns(); renderValidation();
+    renderCompare(); renderRuns(); renderValidation(); markDone();
     toast(best.v.passed === best.v.total ? "จัดตารางสำเร็จ ผ่านทุกเงื่อนไข" : "จัดได้บางส่วน ดูรายละเอียดที่หน้าตรวจผล", best.v.passed === best.v.total ? "ok" : "err");
   };
   function renderCompare() {
@@ -235,6 +256,8 @@
     const opt = $("#vEntity").selectedOptions[0];
     $("#gridTitle").textContent = `ตาราง${{ group: "เรียน", teacher: "สอน", room: "การใช้พื้นที่" }[type]}: ${opt ? opt.textContent : id}`;
     $("#gridBox").innerHTML = gridHTML(type, id);
+    $("#printWho").textContent = $("#gridTitle").textContent;
+    $("#printInfo").textContent = `seed ${S.current.seed} · ผ่าน ${S.current.v.passed}/${S.current.v.total} เงื่อนไข · พิมพ์ ${new Date().toLocaleString("th-TH")}`;
   }
   $("#printBtn").onclick = () => window.print();
 

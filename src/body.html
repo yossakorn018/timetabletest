@@ -4,28 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ระบบจัดตารางเรียน-สอนอัตโนมัติ คณะศึกษาศาสตร์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>/*CSS*/</style>
 </head>
 <body>
 <header>
-  <h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
+  <h1>📅 ระบบจัดตารางเรียน การสอน และการใช้พื้นที่อัตโนมัติ</h1>
   <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p>
 </header>
 <nav>
-  <button data-tab="import">1. นำเข้าข้อมูล</button>
-  <button data-tab="solve">2. จัดตาราง</button>
-  <button data-tab="check">3. ตรวจผล</button>
-  <button data-tab="view">4. ดูตาราง/ส่งออก</button>
-  <button data-tab="report">5. รายงาน</button>
+  <button data-tab="import"><span class="num">1</span>นำเข้าข้อมูล</button>
+  <button data-tab="solve"><span class="num">2</span>จัดตาราง</button>
+  <button data-tab="check"><span class="num">3</span>ตรวจผล</button>
+  <button data-tab="view"><span class="num">4</span>ดูตาราง/ส่งออก</button>
+  <button data-tab="report"><span class="num">5</span>รายงาน</button>
 </nav>
 <main>
 <section class="tab" id="import">
   <h2>นำเข้าไฟล์รายวิชา (Excel)</h2>
   <p class="muted">รองรับไฟล์ .xlsx/.xls ที่แยกชีตตามชั้นปี คอลัมน์: ที่ | รหัสวิชา | ชื่อรายวิชา | หน่วยกิต | กลุ่มวิชา | อาจารย์ผู้สอน | - | หมายเหตุ (* = ผู้บริหาร)</p>
-  <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
-  <button id="tplBtn" class="ghost">ดาวน์โหลดไฟล์แม่แบบ</button>
-  <span id="fileName" class="muted"></span>
+  <div class="drop" id="drop">
+    <div class="ico">📂</div>
+    <div><b>ลากไฟล์ Excel มาวางที่นี่</b><br><span id="fileName" class="muted">หรือกดปุ่มเพื่อเลือกไฟล์ (.xlsx)</span></div>
+    <label class="filebtn">เลือกไฟล์ <input type="file" id="file" accept=".xlsx,.xls"></label>
+    <button id="tplBtn" class="ghost">⬇ ไฟล์แม่แบบ</button>
+  </div>
   <details>
     <summary>ตั้งค่าเงื่อนไขจากคำชี้แจง (กลุ่ม ห้อง สนาม เวลา ผู้บริหาร)</summary>
     <p class="muted">แก้เป็น JSON ได้ทุกค่า ระบบไม่ได้เขียนข้อมูลตายตัวในโค้ด</p>
@@ -90,7 +95,13 @@
     <button id="printBtn">พิมพ์ / PDF</button>
   </div>
   <h3 id="gridTitle"></h3>
-  <div id="gridBox" class="scroll"></div>
+  <div class="print-only print-head"><div><h1>ระบบจัดตารางเรียน การสอน และการใช้พื้นที่</h1>
+    <p>คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่ · ภาคเรียนที่ 2/2569</p></div><div class="who" id="printWho"></div></div>
+  <div class="gridwrap"><div id="gridBox"></div>
+    <div class="legend"><span><i class="k-theory"></i>ทฤษฎี</span><span><i class="k-computer"></i>ห้องคอมพิวเตอร์</span>
+      <span><i class="k-sport"></i>ทักษะกีฬา (ห้องเรียน+สนาม)</span><span><i class="k-combined"></i>เรียนรวมทั้งชั้นปี</span>
+      <span><i class="k-elective"></i>วิชาเลือก</span></div></div>
+  <div class="print-only print-foot"><span id="printInfo"></span><span>พิมพ์จากระบบจัดตารางอัตโนมัติ</span></div>
 </section>
 
 <section class="tab" id="report" hidden>
