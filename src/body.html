@@ -16,10 +16,40 @@
     <div class="lglogo">📅</div>
     <h1>ระบบจัดตารางเรียน-สอนอัตโนมัติ</h1>
     <p class="muted">คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่</p>
-    <label class="fld">ชื่อผู้ใช้<input id="lgUser" autocomplete="username" placeholder="เช่น admin, t01, g1-1"></label>
-    <label class="fld">รหัสผ่าน<input id="lgPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></label>
-    <p id="lgErr" class="lgerr"></p>
-    <button id="lgBtn" class="primary wide">เข้าสู่ระบบ</button>
+    <div class="lgpane" id="paneLogin">
+      <label class="fld">ชื่อผู้ใช้<input id="lgUser" autocomplete="username" placeholder="เช่น admin, t01, g1-1"></label>
+      <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="lgPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"><button type="button" class="eye" data-for="lgPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+      <div class="lglinks"><a href="#" data-pane="paneForgot">ลืมรหัสผ่าน?</a></div>
+      <p id="lgErr" class="lgerr"></p>
+      <button id="lgBtn" class="primary wide">เข้าสู่ระบบ</button>
+      <p class="lgswitch">ยังไม่มีบัญชี? <a href="#" data-pane="paneReg">สมัครบัญชี</a></p>
+    </div>
+    <div class="lgpane" id="paneForgot" hidden>
+      <h2 class="lgsub">🔑 ลืมรหัสผ่าน</h2>
+      <p class="muted small">กรอกชื่อผู้ใช้ ระบบจะส่งคำขอรีเซ็ตรหัสผ่านไปให้ผู้ดูแลระบบ</p>
+      <label class="fld">ชื่อผู้ใช้<input id="fgUser" placeholder="ชื่อผู้ใช้ของคุณ"></label>
+      <label class="fld">ข้อความถึงผู้ดูแล (ไม่บังคับ)<input id="fgNote" placeholder="เช่น เบอร์ติดต่อ หรือรหัสผ่านใหม่ที่อยากได้ไม่ต้องใส่"></label>
+      <p id="fgMsg" class="lgerr"></p>
+      <button id="fgBtn" class="primary wide">ส่งคำขอถึงผู้ดูแลระบบ</button>
+      <p class="lgswitch"><a href="#" data-pane="paneLogin">← กลับไปหน้าเข้าสู่ระบบ</a></p>
+    </div>
+    <div class="lgpane" id="paneReg" hidden>
+      <h2 class="lgsub">📝 สมัครบัญชี</h2>
+      <p class="muted small">สมัครแล้วต้องรอผู้ดูแลระบบอนุมัติก่อนเข้าใช้งาน</p>
+      <div class="two2">
+        <label class="fld">ชื่อผู้ใช้<input id="rgUser" placeholder="a-z 0-9 อย่างน้อย 3 ตัว"></label>
+        <label class="fld">ชื่อ-นามสกุล<input id="rgName" placeholder="ชื่อที่แสดง"></label>
+      </div>
+      <label class="fld">ฉันเป็น<select id="rgRole"><option value="teacher">อาจารย์</option><option value="student">นักศึกษา</option></select></label>
+      <label class="fld" id="rgRefLbl">ชื่ออาจารย์ในระบบ<select id="rgRef"></select></label>
+      <div class="two2">
+        <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="rgPass" type="password" placeholder="อย่างน้อย 4 ตัว"><button type="button" class="eye" data-for="rgPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+        <label class="fld">ยืนยันรหัสผ่าน<span class="pwwrap"><input id="rgPass2" type="password" placeholder="พิมพ์อีกครั้ง"><button type="button" class="eye" data-for="rgPass2" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+      </div>
+      <p id="rgMsg" class="lgerr"></p>
+      <button id="rgBtn" class="primary wide">สมัครบัญชี</button>
+      <p class="lgswitch">มีบัญชีแล้ว? <a href="#" data-pane="paneLogin">เข้าสู่ระบบ</a></p>
+    </div>
     <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
     <p class="muted small">บัญชีเริ่มต้น: <b>admin</b> / <b>admin1234</b></p>
   </div>
@@ -38,7 +68,7 @@
   <button data-tab="view" data-roles="admin,teacher,student"><span class="num">4</span><span id="viewNavLabel">ดูตาราง/ส่งออก</span></button>
   <button data-tab="report"><span class="num">5</span>รายงาน</button>
   <button data-tab="bench"><span class="num">6</span>หลักฐาน/ทดสอบ</button>
-  <button data-tab="users"><span class="num">7</span>จัดการผู้ใช้</button>
+  <button data-tab="users"><span class="num">7</span>จัดการผู้ใช้<span class="nbadge" id="navBadge" hidden></span></button>
 </nav>
 <main>
 <section class="tab" id="import">
@@ -169,12 +199,16 @@
 </section>
 <section class="tab" id="users" hidden>
   <h2>จัดการผู้ใช้และบทบาท</h2>
+  <div class="panel reqpanel" id="reqPanel" hidden>
+    <h3>🔔 คำขอที่รอดำเนินการ <span class="pill" id="reqCount"></span></h3>
+    <div id="reqList"></div>
+  </div>
   <div class="panel">
     <h3>สร้างผู้ใช้ใหม่</h3>
     <div class="ufrm">
       <label class="fld">ชื่อผู้ใช้<input id="nuUser" placeholder="a-z 0-9"></label>
       <label class="fld">ชื่อที่แสดง<input id="nuName" placeholder="เว้นว่างได้ ระบบตั้งให้"></label>
-      <label class="fld">รหัสผ่าน<input id="nuPass" type="text" value="1234"></label>
+      <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="nuPass" type="password" value="1234"><button type="button" class="eye" data-for="nuPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
       <label class="fld">บทบาท<select id="nuRole"><option value="teacher">อาจารย์</option><option value="student">นักศึกษา</option><option value="admin">ผู้ดูแลระบบ</option></select></label>
       <label class="fld" id="nuRefWrap">ผูกกับ<select id="nuRef"></select></label>
       <button id="nuAdd" class="primary">+ สร้างผู้ใช้</button>

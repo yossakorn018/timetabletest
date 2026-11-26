@@ -277,6 +277,31 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
 .fieldnote { display: flex; gap: 14px; align-items: flex-start; background: linear-gradient(135deg, #ecfdf5, #eff6ff); border: 1px solid #a7f3d0; border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; }
 .fieldnote > span { font-size: 34px; } .fieldnote b { font-family: "Prompt", sans-serif; font-size: 16px; } .fieldnote p { margin: 6px 0 2px; } .fieldnote small { color: var(--muted); }
 
+/* ---------- ตา / ลืมรหัส / สมัคร / คำขอ ---------- */
+.pwwrap { position: relative; display: flex; }
+.pwwrap input { flex: 1; padding-right: 42px; width: 100%; }
+button.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 34px; height: 30px; padding: 0; border: 0; background: transparent no-repeat center / 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7489' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); }
+button.eye.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24M1 1l22 22'/%3E%3C/svg%3E"); }
+button.eye:hover:not(:disabled) { transform: translateY(-50%) scale(1.1); box-shadow: none; background-color: var(--pri-soft); }
+.lglinks { text-align: right; margin-top: 6px; font-size: 13px; }
+.lgcard a { color: var(--pri); text-decoration: none; font-weight: 500; } .lgcard a:hover { text-decoration: underline; }
+.lgswitch { font-size: 13.5px; color: var(--muted); margin: 14px 0 0; }
+.lgsub { font-size: 18px; margin: 4px 0 2px; }
+.lgcard.swap .lgpane:not([hidden]) { animation: fadeUp .3s ease; }
+.lgcard { max-height: 94vh; overflow: auto; }
+.two2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 10px; }
+.two2 > *, .fld input { min-width: 0; width: 100%; }
+.okmsg { color: var(--ok) !important; }
+.nbadge { background: var(--err); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; margin-left: 2px; animation: pop .4s ease; }
+.reqpanel { border-color: #fcd34d; background: #fffdf5; }
+.req { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); background: #fff; border-radius: 10px; margin-bottom: 8px; animation: fadeUp .3s ease; }
+.req .ric { font-size: 22px; } .req .rbody { flex: 1; min-width: 240px; } .req small { display: block; color: var(--muted); }
+.req code { background: #f1f5f9; padding: 1px 6px; border-radius: 5px; }
+.pwwrap.sm { width: 150px; } .pwwrap.sm input { padding: 5px 38px 5px 8px; font-size: 13px; }
+.req select { padding: 5px 8px; font-size: 13px; max-width: 240px; }
+.r-pending { background: #fef3c7; color: #b45309; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
@@ -312,10 +337,40 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
     <div class="lglogo">📅</div>
     <h1>ระบบจัดตารางเรียน-สอนอัตโนมัติ</h1>
     <p class="muted">คณะศึกษาศาสตร์ มหาวิทยาลัยการกีฬาแห่งชาติ วิทยาเขตกระบี่</p>
-    <label class="fld">ชื่อผู้ใช้<input id="lgUser" autocomplete="username" placeholder="เช่น admin, t01, g1-1"></label>
-    <label class="fld">รหัสผ่าน<input id="lgPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"></label>
-    <p id="lgErr" class="lgerr"></p>
-    <button id="lgBtn" class="primary wide">เข้าสู่ระบบ</button>
+    <div class="lgpane" id="paneLogin">
+      <label class="fld">ชื่อผู้ใช้<input id="lgUser" autocomplete="username" placeholder="เช่น admin, t01, g1-1"></label>
+      <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="lgPass" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"><button type="button" class="eye" data-for="lgPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+      <div class="lglinks"><a href="#" data-pane="paneForgot">ลืมรหัสผ่าน?</a></div>
+      <p id="lgErr" class="lgerr"></p>
+      <button id="lgBtn" class="primary wide">เข้าสู่ระบบ</button>
+      <p class="lgswitch">ยังไม่มีบัญชี? <a href="#" data-pane="paneReg">สมัครบัญชี</a></p>
+    </div>
+    <div class="lgpane" id="paneForgot" hidden>
+      <h2 class="lgsub">🔑 ลืมรหัสผ่าน</h2>
+      <p class="muted small">กรอกชื่อผู้ใช้ ระบบจะส่งคำขอรีเซ็ตรหัสผ่านไปให้ผู้ดูแลระบบ</p>
+      <label class="fld">ชื่อผู้ใช้<input id="fgUser" placeholder="ชื่อผู้ใช้ของคุณ"></label>
+      <label class="fld">ข้อความถึงผู้ดูแล (ไม่บังคับ)<input id="fgNote" placeholder="เช่น เบอร์ติดต่อ หรือรหัสผ่านใหม่ที่อยากได้ไม่ต้องใส่"></label>
+      <p id="fgMsg" class="lgerr"></p>
+      <button id="fgBtn" class="primary wide">ส่งคำขอถึงผู้ดูแลระบบ</button>
+      <p class="lgswitch"><a href="#" data-pane="paneLogin">← กลับไปหน้าเข้าสู่ระบบ</a></p>
+    </div>
+    <div class="lgpane" id="paneReg" hidden>
+      <h2 class="lgsub">📝 สมัครบัญชี</h2>
+      <p class="muted small">สมัครแล้วต้องรอผู้ดูแลระบบอนุมัติก่อนเข้าใช้งาน</p>
+      <div class="two2">
+        <label class="fld">ชื่อผู้ใช้<input id="rgUser" placeholder="a-z 0-9 อย่างน้อย 3 ตัว"></label>
+        <label class="fld">ชื่อ-นามสกุล<input id="rgName" placeholder="ชื่อที่แสดง"></label>
+      </div>
+      <label class="fld">ฉันเป็น<select id="rgRole"><option value="teacher">อาจารย์</option><option value="student">นักศึกษา</option></select></label>
+      <label class="fld" id="rgRefLbl">ชื่ออาจารย์ในระบบ<select id="rgRef"></select></label>
+      <div class="two2">
+        <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="rgPass" type="password" placeholder="อย่างน้อย 4 ตัว"><button type="button" class="eye" data-for="rgPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+        <label class="fld">ยืนยันรหัสผ่าน<span class="pwwrap"><input id="rgPass2" type="password" placeholder="พิมพ์อีกครั้ง"><button type="button" class="eye" data-for="rgPass2" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
+      </div>
+      <p id="rgMsg" class="lgerr"></p>
+      <button id="rgBtn" class="primary wide">สมัครบัญชี</button>
+      <p class="lgswitch">มีบัญชีแล้ว? <a href="#" data-pane="paneLogin">เข้าสู่ระบบ</a></p>
+    </div>
     <div class="lgroles"><span class="rbadge r-admin">ผู้ดูแลระบบ</span> จัดการทุกอย่าง · <span class="rbadge r-teacher">อาจารย์</span> เห็นเฉพาะวิชาที่สอน · <span class="rbadge r-student">นักศึกษา</span> เห็นเฉพาะกลุ่มตัวเอง</div>
     <p class="muted small">บัญชีเริ่มต้น: <b>admin</b> / <b>admin1234</b></p>
   </div>
@@ -334,7 +389,7 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
   <button data-tab="view" data-roles="admin,teacher,student"><span class="num">4</span><span id="viewNavLabel">ดูตาราง/ส่งออก</span></button>
   <button data-tab="report"><span class="num">5</span>รายงาน</button>
   <button data-tab="bench"><span class="num">6</span>หลักฐาน/ทดสอบ</button>
-  <button data-tab="users"><span class="num">7</span>จัดการผู้ใช้</button>
+  <button data-tab="users"><span class="num">7</span>จัดการผู้ใช้<span class="nbadge" id="navBadge" hidden></span></button>
 </nav>
 <main>
 <section class="tab" id="import">
@@ -465,12 +520,16 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
 </section>
 <section class="tab" id="users" hidden>
   <h2>จัดการผู้ใช้และบทบาท</h2>
+  <div class="panel reqpanel" id="reqPanel" hidden>
+    <h3>🔔 คำขอที่รอดำเนินการ <span class="pill" id="reqCount"></span></h3>
+    <div id="reqList"></div>
+  </div>
   <div class="panel">
     <h3>สร้างผู้ใช้ใหม่</h3>
     <div class="ufrm">
       <label class="fld">ชื่อผู้ใช้<input id="nuUser" placeholder="a-z 0-9"></label>
       <label class="fld">ชื่อที่แสดง<input id="nuName" placeholder="เว้นว่างได้ ระบบตั้งให้"></label>
-      <label class="fld">รหัสผ่าน<input id="nuPass" type="text" value="1234"></label>
+      <label class="fld">รหัสผ่าน<span class="pwwrap"><input id="nuPass" type="password" value="1234"><button type="button" class="eye" data-for="nuPass" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button></span></label>
       <label class="fld">บทบาท<select id="nuRole"><option value="teacher">อาจารย์</option><option value="student">นักศึกษา</option><option value="admin">ผู้ดูแลระบบ</option></select></label>
       <label class="fld" id="nuRefWrap">ผูกกับ<select id="nuRef"></select></label>
       <button id="nuAdd" class="primary">+ สร้างผู้ใช้</button>
@@ -1866,6 +1925,7 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
     return H.map(h => (h >>> 0).toString(16).padStart(8, "0")).join("");
   }
   S.sha256 = sha256;
+  const EYE = '<button type="button" class="eye" data-for="%s" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน"></button>';
   const ROLE_TH = { admin: "ผู้ดูแลระบบ", teacher: "อาจารย์", student: "นักศึกษา" };
   const newSalt = () => Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
   function makeUser(u, name, role, ref, pw) { const salt = newSalt(); return { u: u.trim().toLowerCase(), name, role, ref: ref || "", salt, hash: sha256(salt + pw) }; }
@@ -1883,14 +1943,18 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
   function doLogin() {
     const u = $("#lgUser").value.trim().toLowerCase(), pw = $("#lgPass").value;
     const usr = S.users.find(x => x.u === u);
-    if (!usr || usr.hash !== sha256(usr.salt + pw)) {
+    if (usr && usr.status === "pending" && usr.hash === sha256(usr.salt + pw)) {
+      $("#lgErr").textContent = "บัญชีนี้รอผู้ดูแลระบบอนุมัติ — ลองใหม่ภายหลัง";
+      return;
+    }
+    if (!usr || usr.status === "pending" || usr.hash !== sha256(usr.salt + pw)) {
       $("#lgErr").textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
       $("#loginCard").classList.remove("shake"); void $("#loginCard").offsetWidth; $("#loginCard").classList.add("shake");
       return;
     }
     S.user = usr;
     try { sessionStorage.setItem("tt_session", usr.u); } catch (e) { /* ignore */ }
-    $("#lgPass").value = ""; $("#lgErr").textContent = "";
+    $("#lgPass").value = ""; $("#lgErr").textContent = ""; $("#lgPass").type = "password"; $("#paneLogin .eye").classList.remove("on");
     applyRole();
     toast(`ยินดีต้อนรับ ${usr.name}`, "ok");
   }
@@ -1917,7 +1981,11 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
     });
     $("#xlsxBtn").textContent = r === "admin" ? "ส่งออก Excel (ทุกตาราง)" : "ส่งออก Excel";
     $("#viewNavLabel").textContent = r === "teacher" ? "ตารางสอนของฉัน" : r === "student" ? "ตารางเรียนของฉัน" : "ดูตาราง/ส่งออก";
-    if (r === "admin") { showTab(S.current ? "view" : "import"); renderUsers(); return; }
+    if (r === "admin") {
+      showTab(S.current ? "view" : "import"); renderUsers();
+      if (S.reqs.length) setTimeout(() => toast(`🔔 มีคำขอรอดำเนินการ ${S.reqs.length} รายการ (เมนูจัดการผู้ใช้)`, "ok"), 1200);
+      return;
+    }
     // ครู/นักศึกษา: ล็อกมุมมองให้เห็นเฉพาะของตัวเอง
     $("#vType").value = r === "teacher" ? "teacher" : "group";
     showTab("view");
@@ -1949,6 +2017,112 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
       <td>${esc([...a.rooms].join(", "))}</td><td>${a.hours}</td></tr>`).join("")}</table>`;
   };
 
+  // ---------- ปุ่มรูปตา: แสดง/ซ่อนรหัสผ่าน ----------
+  document.querySelectorAll("button.eye").forEach(b => b.onclick = () => {
+    const inp = document.getElementById(b.dataset.for);
+    const show = inp.type === "password";
+    inp.type = show ? "text" : "password";
+    b.classList.toggle("on", show);
+    b.setAttribute("aria-label", show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน");
+    inp.focus();
+  });
+
+  // ---------- สลับหน้า: เข้าสู่ระบบ / ลืมรหัส / สมัคร ----------
+  function showPane(id) {
+    document.querySelectorAll(".lgpane").forEach(p => p.hidden = p.id !== id);
+    $("#loginCard").classList.remove("swap"); void $("#loginCard").offsetWidth; $("#loginCard").classList.add("swap");
+    ["#lgErr", "#fgMsg", "#rgMsg"].forEach(s => { $(s).textContent = ""; $(s).className = "lgerr"; });
+    if (id === "paneReg") fillRegRef();
+  }
+  document.querySelectorAll("[data-pane]").forEach(a => a.onclick = (e) => { e.preventDefault(); showPane(a.dataset.pane); });
+
+  // ---------- คำขอถึงผู้ดูแล ----------
+  function loadReqs() { try { return JSON.parse(localStorage.getItem("tt_requests") || "[]"); } catch (e) { return []; } }
+  function saveReqs() { try { localStorage.setItem("tt_requests", JSON.stringify(S.reqs)); } catch (e) { /* ignore */ } }
+  S.reqs = loadReqs();
+  const nowTH = () => new Date().toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
+  const okMsg = (sel, m) => { $(sel).textContent = m; $(sel).className = "lgerr okmsg"; };
+
+  $("#fgBtn").onclick = () => {
+    const u = $("#fgUser").value.trim().toLowerCase();
+    if (!u) { $("#fgMsg").textContent = "กรอกชื่อผู้ใช้ก่อน"; return; }
+    const usr = S.users.find(x => x.u === u);
+    // ไม่บอกว่ามีบัญชีนี้หรือไม่ เพื่อไม่ให้คนอื่นเดาชื่อผู้ใช้ได้
+    if (usr && !S.reqs.some(r => r.type === "forgot" && r.u === u)) {
+      S.reqs.push({ id: Date.now(), type: "forgot", u, name: usr.name, note: $("#fgNote").value.trim(), at: nowTH() });
+      saveReqs();
+    }
+    okMsg("#fgMsg", "✔ ส่งคำขอแล้ว ผู้ดูแลระบบจะรีเซ็ตรหัสผ่านและแจ้งรหัสใหม่ให้คุณ");
+    $("#fgUser").value = ""; $("#fgNote").value = "";
+  };
+
+  function fillRegRef() {
+    const role = $("#rgRole").value, opts = refOptions(role);
+    $("#rgRefLbl").firstChild.textContent = role === "teacher" ? "ชื่ออาจารย์ในระบบ" : "กลุ่มเรียน";
+    $("#rgRef").innerHTML = opts.length ? opts.map(([v, n]) => `<option value="${esc(v)}">${esc(n)}</option>`).join("")
+      : `<option value="">— ให้ผู้ดูแลระบบเลือกให้ —</option>`;
+  }
+  $("#rgRole").onchange = fillRegRef;
+  $("#rgBtn").onclick = () => {
+    const u = $("#rgUser").value.trim().toLowerCase(), name = $("#rgName").value.trim();
+    const pw = $("#rgPass").value, pw2 = $("#rgPass2").value, role = $("#rgRole").value, ref = $("#rgRef").value;
+    const err = (m) => { $("#rgMsg").textContent = m; $("#rgMsg").className = "lgerr"; };
+    if (!/^[a-z0-9._-]{3,}$/.test(u)) return err("ชื่อผู้ใช้ต้องเป็น a-z 0-9 . _ - อย่างน้อย 3 ตัว");
+    if (!name) return err("กรอกชื่อ-นามสกุล");
+    if (pw.length < 4) return err("รหัสผ่านอย่างน้อย 4 ตัวอักษร");
+    if (pw !== pw2) return err("รหัสผ่านทั้งสองช่องไม่ตรงกัน");
+    if (S.users.some(x => x.u === u)) return err("มีชื่อผู้ใช้นี้แล้ว ลองชื่ออื่น");
+    const nu = makeUser(u, name, role, ref, pw);
+    nu.status = "pending"; nu.at = nowTH();
+    S.users.push(nu); saveUsers();
+    S.reqs.push({ id: Date.now(), type: "register", u, name, role, ref, at: nowTH() }); saveReqs();
+    ["#rgUser", "#rgName", "#rgPass", "#rgPass2"].forEach(s => $(s).value = "");
+    okMsg("#rgMsg", "✔ สมัครแล้ว รอผู้ดูแลระบบอนุมัติ แล้วจึงเข้าสู่ระบบได้");
+  };
+
+  function renderReqs() {
+    S.reqs = loadReqs();
+    const n = S.reqs.length;
+    $("#navBadge").hidden = !n; $("#navBadge").textContent = n;
+    $("#reqPanel").hidden = !n;
+    if (!n) return;
+    $("#reqCount").textContent = n + " รายการ";
+    $("#reqList").innerHTML = S.reqs.map((r, i) => r.type === "forgot" ? `
+      <div class="req"><span class="ric">🔑</span><div class="rbody"><b>${esc(r.name)}</b> (<code>${esc(r.u)}</code>) ขอรีเซ็ตรหัสผ่าน
+        <small>${esc(r.at)}${r.note ? " · " + esc(r.note) : ""}</small></div>
+        <span class="pwwrap sm"><input type="password" id="rq-pw-${i}" value="1234">${EYE.replace("%s", "rq-pw-" + i)}</span>
+        <button class="small primary" data-reset="${i}">ตั้งรหัสใหม่</button><button class="small ghost" data-dismiss="${i}">ปิด</button></div>` : `
+      <div class="req"><span class="ric">📝</span><div class="rbody"><b>${esc(r.name)}</b> (<code>${esc(r.u)}</code>) สมัครเป็น <span class="rbadge r-${r.role}">${ROLE_TH[r.role]}</span>
+        <small>${esc(r.at)}</small></div>
+        <select id="rq-ref-${i}">${refOptions(r.role).map(([v, nm]) => `<option value="${esc(v)}" ${v === r.ref ? "selected" : ""}>${esc(nm)}</option>`).join("")}</select>
+        <button class="small primary" data-approve="${i}">อนุมัติ</button><button class="small danger" data-reject="${i}">ปฏิเสธ</button></div>`).join("");
+    const box = $("#reqList");
+    box.querySelectorAll("button.eye").forEach(b => b.onclick = () => { const inp = document.getElementById(b.dataset.for); const s = inp.type === "password"; inp.type = s ? "text" : "password"; b.classList.toggle("on", s); });
+    const done = (i, msg) => { S.reqs.splice(i, 1); saveReqs(); saveUsers(); renderReqs(); renderUsersTable(); toast(msg, "ok"); };
+    box.querySelectorAll("[data-reset]").forEach(b => b.onclick = () => {
+      const i = +b.dataset.reset, r = S.reqs[i], usr = S.users.find(x => x.u === r.u), pw = $("#rq-pw-" + i).value;
+      if (!usr) return done(i, "ไม่พบบัญชีนี้แล้ว ปิดคำขอ");
+      if (pw.length < 4) return toast("รหัสผ่านอย่างน้อย 4 ตัวอักษร", "err");
+      usr.salt = newSalt(); usr.hash = sha256(usr.salt + pw);
+      done(i, `ตั้งรหัสผ่านใหม่ให้ ${r.u} แล้ว — แจ้งรหัส "${pw}" ให้ผู้ใช้`);
+    });
+    box.querySelectorAll("[data-dismiss]").forEach(b => b.onclick = () => done(+b.dataset.dismiss, "ปิดคำขอแล้ว"));
+    box.querySelectorAll("[data-approve]").forEach(b => b.onclick = () => {
+      const i = +b.dataset.approve, r = S.reqs[i], usr = S.users.find(x => x.u === r.u), ref = ($("#rq-ref-" + i) || {}).value;
+      if (!usr) return done(i, "ไม่พบบัญชีนี้แล้ว ปิดคำขอ");
+      if (!ref) return toast("เลือกอาจารย์/กลุ่มที่ผูกกับบัญชีก่อน (ต้องนำเข้าข้อมูลก่อน)", "err");
+      usr.ref = ref; usr.status = "active";
+      done(i, `อนุมัติบัญชี ${r.u} แล้ว`);
+    });
+    box.querySelectorAll("[data-reject]").forEach(b => b.onclick = () => {
+      const i = +b.dataset.reject, r = S.reqs[i];
+      if (!confirmInline(b, `ปฏิเสธการสมัครของ ${r.u}?`)) return;
+      S.users = S.users.filter(x => !(x.u === r.u && x.status === "pending"));
+      done(i, `ปฏิเสธการสมัครของ ${r.u} แล้ว`);
+    });
+  }
+  S.renderReqs = renderReqs;
+
   // ---------- จัดการผู้ใช้ (admin) ----------
   function refOptions(role) {
     if (role === "teacher") return S.data ? S.data.teachers.map(t => [t.id, `${t.id} ${t.name}`]) : [];
@@ -1968,11 +2142,12 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
     return "ทุกเมนู";
   }
   const tNameSafe = (id) => (S.data && S.data.teachers.find(t => t.id === id) || { name: id }).name;
-  function renderUsers() {
+  function renderUsers() { renderReqs(); renderUsersTable(); }
+  function renderUsersTable() {
     fillRef();
     $("#userTable").innerHTML = `<tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>บทบาท</th><th>สิทธิ์เห็นข้อมูล</th><th></th></tr>` +
       S.users.map((u, i) => `<tr><td><b>${esc(u.u)}</b></td><td>${esc(u.name)}</td><td><span class="rbadge r-${u.role}">${ROLE_TH[u.role]}</span></td>
-        <td>${esc(refName(u))}</td><td class="acts"><button class="small" data-pw="${i}">รีเซ็ตรหัส</button>
+        <td>${esc(refName(u))}${u.status === "pending" ? ' <span class="rbadge r-pending">รออนุมัติ</span>' : ""}</td><td class="acts"><button class="small" data-pw="${i}">รีเซ็ตรหัส</button>
         <button class="small danger" data-del="${i}" ${u.u === S.user?.u ? "disabled" : ""}>ลบ</button></td></tr>`).join("");
     $("#userTable").querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
       const u = S.users[+b.dataset.del];
@@ -2003,7 +2178,7 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
     if (role !== "admin" && !ref) return toast("เลือกอาจารย์/กลุ่มที่ผูกกับบัญชีนี้ก่อน", "err");
     if (S.users.some(x => x.u === u)) return toast("มีชื่อผู้ใช้นี้แล้ว", "err");
     const name = $("#nuName").value.trim() || (role === "teacher" ? tNameSafe(ref) : role === "student" ? "นักศึกษากลุ่ม " + ref : u);
-    S.users.push(makeUser(u, name, role, ref, pw)); saveUsers(); renderUsers();
+    S.users.push(makeUser(u, name, role, ref, pw)); saveUsers(); renderUsersTable();
     $("#nuUser").value = ""; $("#nuName").value = "";
     toast(`สร้างบัญชี ${u} (${ROLE_TH[role]}) แล้ว`, "ok");
   };

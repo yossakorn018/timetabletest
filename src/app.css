@@ -267,6 +267,31 @@ body.role-teacher .adminOnly, body.role-student .adminOnly { display: none !impo
 .fieldnote { display: flex; gap: 14px; align-items: flex-start; background: linear-gradient(135deg, #ecfdf5, #eff6ff); border: 1px solid #a7f3d0; border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; }
 .fieldnote > span { font-size: 34px; } .fieldnote b { font-family: "Prompt", sans-serif; font-size: 16px; } .fieldnote p { margin: 6px 0 2px; } .fieldnote small { color: var(--muted); }
 
+/* ---------- ตา / ลืมรหัส / สมัคร / คำขอ ---------- */
+.pwwrap { position: relative; display: flex; }
+.pwwrap input { flex: 1; padding-right: 42px; width: 100%; }
+button.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 34px; height: 30px; padding: 0; border: 0; background: transparent no-repeat center / 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7489' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); }
+button.eye.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24M1 1l22 22'/%3E%3C/svg%3E"); }
+button.eye:hover:not(:disabled) { transform: translateY(-50%) scale(1.1); box-shadow: none; background-color: var(--pri-soft); }
+.lglinks { text-align: right; margin-top: 6px; font-size: 13px; }
+.lgcard a { color: var(--pri); text-decoration: none; font-weight: 500; } .lgcard a:hover { text-decoration: underline; }
+.lgswitch { font-size: 13.5px; color: var(--muted); margin: 14px 0 0; }
+.lgsub { font-size: 18px; margin: 4px 0 2px; }
+.lgcard.swap .lgpane:not([hidden]) { animation: fadeUp .3s ease; }
+.lgcard { max-height: 94vh; overflow: auto; }
+.two2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 10px; }
+.two2 > *, .fld input { min-width: 0; width: 100%; }
+.okmsg { color: var(--ok) !important; }
+.nbadge { background: var(--err); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; margin-left: 2px; animation: pop .4s ease; }
+.reqpanel { border-color: #fcd34d; background: #fffdf5; }
+.req { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); background: #fff; border-radius: 10px; margin-bottom: 8px; animation: fadeUp .3s ease; }
+.req .ric { font-size: 22px; } .req .rbody { flex: 1; min-width: 240px; } .req small { display: block; color: var(--muted); }
+.req code { background: #f1f5f9; padding: 1px 6px; border-radius: 5px; }
+.pwwrap.sm { width: 150px; } .pwwrap.sm input { padding: 5px 38px 5px 8px; font-size: 13px; }
+.req select { padding: 5px 8px; font-size: 13px; max-width: 240px; }
+.r-pending { background: #fef3c7; color: #b45309; }
+
 .print-only { display: none; }
 
 /* ---------- พิมพ์ / PDF ---------- */
