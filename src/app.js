@@ -401,7 +401,6 @@
   // ล็อกอิน: กู้ session เดิม หรือแสดงหน้าล็อกอิน
   let sess = null;
   try { sess = sessionStorage.getItem("tt_session"); } catch (e) { /* ignore */ }
-  if (!window.EMBED) S.loadStored();
   const su = S.users.find(u => u.u === sess);
   if (su) { S.user = su; S.applyRole(); } else $("#loginView").classList.add("show");
   // ไฟล์ฉบับฝังข้อมูล: โหลดข้อมูล -> บันทึก -> จัดตารางอัตโนมัติ
@@ -412,6 +411,18 @@
     if (!$("#saveData").disabled) {
       $("#saveData").click();
       if (!S.current) $("#runBtn").onclick().then(() => showTab("view"));
+    }
+  } else {
+    // ไฟล์ปกติ: ถ้าเคยจัดตารางไว้ ให้โหลดข้อมูลเดิมกลับมา แล้วกู้ตาราง (seed + การย้ายด้วยมือ)
+    let sv = null;
+    try { sv = JSON.parse(localStorage.getItem("tt_sched") || "null"); } catch (e) { /* ignore */ }
+    if (sv && sv.sheets && sv.data && sv.cfg) {
+      S.cfgBase = S.cfgBase || S.cfg;
+      S.sheets = sv.sheets; S.scale = sv.scale || 1; S.cfg = sv.cfg;
+      S.draft = JSON.parse(JSON.stringify(sv.data));
+      $("#fileName").textContent = sv.fileName || "ข้อมูลที่บันทึกไว้";
+      parseDraft(true);
+      if (!$("#saveData").disabled) $("#saveData").click();
     }
   }
 })();

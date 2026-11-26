@@ -191,11 +191,11 @@
   S.fingerprint = () => S.sha256(JSON.stringify(S.sheets) + "|" + (S.scale || 1) + "|" + JSON.stringify(S.cfg));
   S.persist = () => {
     if (!S.current || !S.data) return;
-    try {
-      // เก็บข้อมูลรายวิชา (src) ไปด้วย เพื่อให้หน้าที่ไม่ได้ฝังข้อมูลกู้คืนได้หลังรีเฟรช
-      localStorage.setItem("tt_sched", JSON.stringify({ fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH"),
-        src: window.EMBED ? null : S.sheets, scale: S.scale || 1, cfgBase: S.cfgBase || S.cfg, cfgUsed: S.cfg }));
-    } catch (e) { /* ignore */ }
+    const sv = { fp: S.fingerprint(), seed: S.current.seed, moves: movesOf(), at: new Date().toLocaleString("th-TH") };
+    // เก็บข้อมูลที่นำเข้าไว้ด้วย เพื่อให้รีเฟรชหน้าแล้วกู้ตารางกลับมาได้โดยไม่ต้องนำเข้าไฟล์ใหม่
+    const full = Object.assign({}, sv, { sheets: S.sheets, scale: S.scale || 1, cfg: S.cfg, data: S.data, fileName: $("#fileName").textContent });
+    try { localStorage.setItem("tt_sched", JSON.stringify(full)); }
+    catch (e) { try { localStorage.setItem("tt_sched", JSON.stringify(sv)); } catch (e2) { /* ignore */ } }
   };
   S.restoreSaved = () => {
     let sv = null;
@@ -214,26 +214,6 @@
     S.runs = [r];
     $("#status").textContent = `กู้คืนตารางที่บันทึกไว้เมื่อ ${sv.at}: seed ${sv.seed}, ย้ายด้วยมือ ${r.moves.length} ครั้ง — ผ่าน ${r.v.passed}/${r.v.total} เงื่อนไข${bad ? ` (ข้ามการย้ายที่ใช้ไม่ได้ ${bad} รายการ)` : ""}`;
     return true;
-  };
-
-  // เปิดหน้าใหม่ (ไม่มีข้อมูลฝัง): โหลดข้อมูลที่เก็บไว้ แล้วกู้คืนตารางเดิม
-  S.loadStored = () => {
-    let sv = null;
-    try { sv = JSON.parse(localStorage.getItem("tt_sched") || "null"); } catch (e) { /* ignore */ }
-    if (!sv || !sv.src) return false;
-    try {
-      S.sheets = sv.src; S.cfgBase = sv.cfgBase; S.scale = sv.scale || 1;
-      if (sv.src.dataset) { S.cfg = sv.cfgUsed; S.draft = JSON.parse(JSON.stringify(sv.src.dataset)); S.draft.warnings = []; }
-      else {
-        S.cfg = sv.cfgBase; S.draft = TT.parseWorkbook(S.sheets, S.cfg);
-        if (S.scale > 1) { const sc = TT.scaleData(S.draft, S.cfg, S.scale); S.draft = sc.data; S.cfg = sc.cfg; }
-      }
-      $("#fileName").textContent = `ข้อมูลที่บันทึกไว้ (${sv.at})`;
-      S.parseDraft(true);
-      if ($("#saveData").disabled) return false;
-      $("#saveData").click();
-      return !!S.current;
-    } catch (e) { return false; }
   };
 
   // ---------- ชุดข้อมูลตัวอย่าง เล็ก / กลาง / ใหญ่ ----------
