@@ -397,7 +397,7 @@
   loadCfg();
   showTab("import");
   const params = new URLSearchParams(location.search);
-  if (window.EMBED && params.get("m") === "1") { S.renderMobile(params); return; }
+  if (params.get("m") === "1") { S.renderMobile(params); return; }
   // ล็อกอิน: กู้ session เดิม หรือแสดงหน้าล็อกอิน
   let sess = null;
   try { sess = sessionStorage.getItem("tt_session"); } catch (e) { /* ignore */ }

@@ -17,8 +17,10 @@ app = sample_js + (d / "app.js").read_text(encoding="utf-8").replace("/*FEATURES
 # ห่อแอปเป็นฟังก์ชัน ให้ cloud.js ดึงข้อมูลกลางก่อนแล้วค่อยเริ่มแอป
 i = app.index("(function () {"); j = app.rindex("})();")
 app = app[:i] + "window.__startApp = function () {" + app[i + len("(function () {"):j] + "};" + app[j + len("})();"):]
-app += "\n" + (d / "cloud-config.js").read_text(encoding="utf-8") + "\n" + (d / "cloud.js").read_text(encoding="utf-8")
-(d / "dist" / "index.html").write_text(html.replace("/*APP*/", app), encoding="utf-8")
+cloud = "\n" + (d / "cloud-config.js").read_text(encoding="utf-8") + "\n" + (d / "cloud.js").read_text(encoding="utf-8")
+# index.html = ไฟล์เปล่า ใช้พื้นที่ข้อมูลแยก (blank_) ไม่ปนกับ index_with_data.html
+(d / "dist" / "index.html").write_text(html.replace("/*APP*/", app + '\nwindow.TT_NS = "blank_";' + cloud), encoding="utf-8")
+app += cloud
 print("built dist/index.html")
 
 if len(sys.argv) > 1:

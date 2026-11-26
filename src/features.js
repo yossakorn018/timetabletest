@@ -316,7 +316,7 @@
 
   // ---------- 6) QR Code ----------
   function shareURL(type, id) {
-    const base = location.href.split("?")[0].split("#")[0].replace(/[^/]*$/, "") + "index_with_data.html";
+    const base = location.href.split("?")[0].split("#")[0];   // หน้าเดียวกับที่เปิดอยู่ (แต่ละหน้าใช้ข้อมูลของตัวเอง)
     const q = new URLSearchParams({ m: "1", seed: S.current.seed, t: type, id });
     if (movesOf().length) q.set("mv", movesOf().map(m => m.join("~")).join(","));
     return base + "?" + q.toString();
@@ -349,8 +349,13 @@
   function renderMobile(params) {
     document.body.classList.add("mobile");
     const seed = parseInt(params.get("seed"), 10) || 0, type = params.get("t") || "group", id = params.get("id");
-    S.sheets = window.EMBED.sheets;
-    S.data = TT.parseWorkbook(S.sheets, S.cfg);
+    if (window.EMBED) { S.sheets = window.EMBED.sheets; S.data = TT.parseWorkbook(S.sheets, S.cfg); }
+    else {
+      let sv = null;
+      try { sv = JSON.parse(localStorage.getItem("tt_sched") || "null"); } catch (e) { /* ignore */ }
+      if (!sv || !sv.data) { $("#mobile").innerHTML = `<div class="mhead"><h1>ยังไม่มีตาราง</h1><span>ผู้ดูแลระบบยังไม่ได้จัดตาราง</span></div>`; return; }
+      S.sheets = sv.sheets; S.cfg = sv.cfg; S.scale = sv.scale || 1; S.data = sv.data;
+    }
     S.check = TT.inputCheck(S.data, S.cfg);
     const r = TT.solveOnce(S.data, S.cfg, seed);
     S.current = r; r.moves = []; r.undo = [];

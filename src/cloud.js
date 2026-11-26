@@ -8,13 +8,18 @@
 (function () {
   const CFG = window.CLOUD_CFG || {};
   const KEYS = ["tt_users", "tt_sched", "tt_requests", "tt_cfg", "tt_demo_v1"];
+  // แยกพื้นที่ข้อมูลของแต่ละหน้า: index.html (ไฟล์เปล่า) ใช้ "blank_" ส่วน index_with_data.html ใช้ชุดหลัก
+  const NS = window.TT_NS || "";
+  const nk = (k) => (NS && typeof k === "string" && k.startsWith("tt_")) ? NS + k : k;
+  const CKEYS = KEYS.map(k => NS + k);
   const on = !!(CFG.url && CFG.key);
   const C = window.CLOUD = { on, status: on ? "connecting" : "local", lastSync: null, pending: {}, applying: false };
   // key แบบใหม่ (sb_publishable_...) ใส่แค่ apikey · key แบบเก่า (JWT eyJ...) ใส่ Authorization ด้วย
   const H = !on ? {} : /^sb_/.test(CFG.key) ? { apikey: CFG.key } : { apikey: CFG.key, Authorization: "Bearer " + CFG.key };
   const base = on ? CFG.url.replace(/\/$/, "") + "/rest/v1/app_state" : "";
-  const rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem;
+  const rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem, rawGet = Storage.prototype.getItem;
   const ls = window.localStorage;
+  const lget = (k) => rawGet.call(ls, k);
 
   function badge() {
     const el = document.getElementById("cloudBadge");
@@ -33,7 +38,7 @@
   C.badge = badge;
 
   async function pullAll() {
-    const url = base + "?select=key,value&key=in.(" + KEYS.join(",") + ")";
+    const url = base + "?select=key,value&key=in.(" + CKEYS.join(",") + ")";
     const r = await fetch(url, { headers: H, cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.json();
@@ -67,17 +72,16 @@
   }
   C.flush = flush;
 
-  // เขียน localStorage เมื่อไหร่ ส่งขึ้นเซิร์ฟเวอร์ด้วย (เฉพาะคีย์ของระบบ)
-  if (on) {
-    Storage.prototype.setItem = function (k, v) {
-      rawSet.call(this, k, v);
-      if (this === ls && KEYS.includes(k) && !C.applying) queue(k, String(v));
-    };
-    Storage.prototype.removeItem = function (k) {
-      rawRemove.call(this, k);
-      if (this === ls && KEYS.includes(k) && !C.applying) queue(k, null);
-    };
-  }
+  // อ่าน/เขียน localStorage ผ่านชื่อที่แยกพื้นที่แล้ว และส่งขึ้นเซิร์ฟเวอร์ (เฉพาะคีย์ของระบบ)
+  Storage.prototype.getItem = function (k) { return rawGet.call(this, nk(k)); };
+  Storage.prototype.setItem = function (k, v) {
+    rawSet.call(this, nk(k), v);
+    if (on && this === ls && KEYS.includes(k) && !C.applying) queue(nk(k), String(v));
+  };
+  Storage.prototype.removeItem = function (k) {
+    rawRemove.call(this, nk(k));
+    if (on && this === ls && KEYS.includes(k) && !C.applying) queue(nk(k), null);
+  };
 
   function apply(rows) {
     C.applying = true;
@@ -105,8 +109,8 @@
     try {
       if (Object.keys(C.pending).length) await flush();
       const rows = await pullAll();
-      const changed = rows.some(r => !(r.key in C.pending) && r.key !== "tt_demo_v1" &&
-        (r.value === null ? ls.getItem(r.key) !== null : ls.getItem(r.key) !== (typeof r.value === "string" ? r.value : JSON.stringify(r.value))));
+      const changed = rows.some(r => !(r.key in C.pending) && r.key !== NS + "tt_demo_v1" &&
+        (r.value === null ? lget(r.key) !== null : lget(r.key) !== (typeof r.value === "string" ? r.value : JSON.stringify(r.value))));
       C.status = "online"; C.lastSync = new Date(); badge();
       if (changed) notifyRemote();
     } catch (e) { C.status = "offline"; badge(); }
@@ -126,7 +130,7 @@
   }).catch(() => { C.status = "offline"; }).finally(() => {
     start();
     // เครื่องแรก: ส่งข้อมูลในเครื่องขึ้นไปตั้งต้นข้อมูลกลาง
-    if (C.status === "online") KEYS.forEach(k => { if (!C.cloudKeys.has(k) && ls.getItem(k) !== null) queue(k, ls.getItem(k)); });
+    if (C.status === "online") CKEYS.forEach(k => { if (!C.cloudKeys.has(k) && lget(k) !== null) queue(k, lget(k)); });
     setInterval(check, 20000);
     window.addEventListener("focus", check);
     document.addEventListener("visibilitychange", check);
