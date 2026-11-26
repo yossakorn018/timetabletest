@@ -109,7 +109,7 @@
   // ---------- จัดการผู้ใช้ (admin) ----------
   function refOptions(role) {
     if (role === "teacher") return S.data ? S.data.teachers.map(t => [t.id, `${t.id} ${t.name}`]) : [];
-    if (role === "student") return S.data ? S.data.groups.filter(g => S.check && S.check.groupHours[g.id]).map(g => [g.id, "กลุ่ม " + g.id]) : [];
+    if (role === "student") return S.data ? S.data.groups.map(g => [g.id, "กลุ่ม " + g.id]) : [];
     return [];
   }
   function fillRef() {
@@ -173,7 +173,7 @@
   $("#bulkStudent").onclick = () => {
     if (!S.data) return toast("นำเข้าข้อมูลก่อน", "err");
     const pw = $("#nuPass").value || "1234"; let n = 0;
-    S.data.groups.filter(g => S.check.groupHours[g.id]).forEach(g => {
+    S.data.groups.forEach(g => {
       const u = "g" + g.id.replace("/", "-");
       if (!S.users.some(x => x.u === u)) { S.users.push(makeUser(u, "นักศึกษากลุ่ม " + g.id, "student", g.id, pw)); n++; }
     });

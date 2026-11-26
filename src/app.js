@@ -79,7 +79,8 @@
     const d = S.draft;
     $("#preview").hidden = false;
     $("#sumCards").innerHTML = [
-      ["ผู้สอน", d.teachers.length], ["กลุ่มเรียน", d.groups.filter(g => chk.groupHours[g.id]).length],
+      ["ผู้สอน", d.teachers.length], ["กลุ่มที่ต้องจัดตาราง", d.groups.filter(g => chk.groupHours[g.id]).length],
+      ["กลุ่มฝึกสอน (ไม่จัดตาราง)", d.groups.filter(g => S.cfg.noScheduleYears.includes(g.year)).length],
       ["รายวิชา", d.subjects.length], ["ตอนเรียน", d.sections.length],
       ["ช่องเวลาที่จัดได้/สัปดาห์", chk.freeSlots]
     ].map(([k, v]) => `<div class="card"><b>${v}</b><span>${k}</span></div>`).join("");
@@ -195,7 +196,7 @@
   $("#vSearch").oninput = () => { fillEntities(); renderView(); };
   function entities() {
     const t = $("#vType").value, d = S.data;
-    if (t === "group") return S.roleFilter(t, d.groups.filter(g => S.check.groupHours[g.id]).map(g => [g.id, "กลุ่ม " + g.id + " (ห้อง " + g.home + ")"]));
+    if (t === "group") return S.roleFilter(t, d.groups.map(g => [g.id, "กลุ่ม " + g.id + (S.cfg.noScheduleYears.includes(g.year) ? " (ฝึกสอนในสถานศึกษา)" : " (ห้อง " + g.home + ")")]));
     if (t === "teacher") return S.roleFilter(t, d.teachers.map(x => [x.id, x.name + (x.role === "Manager" ? " (ผู้บริหาร)" : "")]));
     if (S.user && S.user.role !== "admin") return [];
     const used = new Set(S.current ? S.current.rows.flatMap(r => r.rooms) : []);
@@ -223,8 +224,21 @@
     if (type !== "room") parts.push(`<small>📍 ${esc(r.rooms.join(" + "))}</small>`);
     return parts.join("");
   }
+  // ปีที่ฝึกสอนทั้งภาค / ครูที่รับผิดชอบวิชาฝึกแต่ไม่มีคาบ
+  function fieldNote(type, id) {
+    const subs = S.data.subjects.filter(s => s.hours === 0 && S.cfg.noScheduleYears.includes(s.year));
+    let list = [];
+    if (type === "group") { const g = S.data.groups.find(x => x.id === id); if (g && S.cfg.noScheduleYears.includes(g.year)) list = subs.filter(s => s.year === g.year); }
+    if (type === "teacher") list = subs.filter(s => s.teachers.includes(id));
+    if (!list.length) return "";
+    return `<div class="fieldnote"><span>🏫</span><div><b>${type === "group" ? "ฝึกปฏิบัติการสอนในสถานศึกษาตลอดภาคเรียน — ไม่มีตารางเรียนในมหาวิทยาลัย" : "รับผิดชอบรายวิชาฝึกสอน (ไม่มีคาบสอน)"}</b>
+      ${list.map(s => `<p>${esc(s.code)} ${esc(s.name)} ${esc(s.credit)} · ผู้รับผิดชอบ: ${esc(s.teachers.map(tName).join(", "))}</p>`).join("")}
+      <small>ตามคำชี้แจงข้อ 6: นักศึกษาชั้นปีที่ 4 ฝึกปฏิบัติงานและสอนจริงในสถานศึกษา ผู้สอนมีหน้าที่รับผิดชอบรายวิชาเท่านั้น</small></div></div>`;
+  }
   function gridHTML(type, id) {
     const tm = TT.timeModel(S.data, S.cfg), P = tm.P;
+    const note = fieldNote(type, id);
+    if (note && type === "group") return note;
     const rows = filterRows(type, id);
     const bySlot = {};
     rows.forEach(r => (bySlot[r.slot] = bySlot[r.slot] || []).push(r));
@@ -249,7 +263,7 @@
       }
       h += "</tr>";
     });
-    return h + "</table>";
+    return note + h + "</table>";
   }
   function renderView() {
     if (!S.current) { $("#gridBox").innerHTML = `<p class='muted'>${S.isAdmin() ? "ยังไม่มีผลการจัดตาราง" : "ยังไม่มีตาราง รอผู้ดูแลระบบจัดตารางก่อน"}</p>`; return; }
