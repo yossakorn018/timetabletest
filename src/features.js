@@ -116,32 +116,46 @@
     document.querySelectorAll("#gridBox td.can, #gridBox td.cannot").forEach(td => td.classList.remove("can", "cannot"));
     $("#dndHint").className = "";
   }
+  // ช่อง (slot) ที่เมาส์ชี้อยู่จริง — รองรับช่องที่รวมหลายคาบ (colspan)
+  function slotUnder(td, e) {
+    const len = +td.dataset.len || 1, r = td.getBoundingClientRect();
+    const i = Math.min(len - 1, Math.max(0, Math.floor((e.clientX - r.left) / (r.width / len))));
+    return +td.dataset.slot + i;
+  }
+  let lastTarget = null;
   S.attachDnD = function () {
     const box = $("#gridBox");
     box.querySelectorAll("td.cell").forEach(td => {
       td.draggable = true;
       td.addEventListener("dragstart", (e) => {
-        drag = { key: td.dataset.key, start: +td.dataset.slot, len: +td.dataset.len };
+        // grab = คาบที่จับไว้ในบล็อก (จับตรงกลาง ก็ย้ายตามตรงกลาง)
+        const grab = slotUnder(td, e) - +td.dataset.slot;
+        drag = { key: td.dataset.key, start: +td.dataset.slot, len: +td.dataset.len, grab };
         e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", drag.key);
         setTimeout(() => td.classList.add("dragging"), 0);
-        box.querySelectorAll("td[data-slot]").forEach(t => {
-          const res = checkMove(drag, +t.dataset.slot);
-          if (res.same) return;
-          t.classList.add(res.ok ? "can" : "cannot");
-          t.dataset.why = res.ok ? "✔ วางได้ ไม่ชนใคร" : "✖ " + res.reasons.slice(0, 3).join(" · ");
+        // ระบายสีล่วงหน้าเฉพาะช่องว่าง 1 คาบ (ช่องอื่นคำนวณตอนชี้)
+        box.querySelectorAll("td[data-slot]:not(.cell)").forEach(t => {
+          const res = checkMove(drag, +t.dataset.slot - drag.grab);
+          if (!res.same) t.classList.add(res.ok ? "can" : "cannot");
         });
       });
-      td.addEventListener("dragend", () => { td.classList.remove("dragging"); clearTargets(); drag = null; });
+      td.addEventListener("dragend", () => { td.classList.remove("dragging"); clearTargets(); drag = null; lastTarget = null; });
     });
     box.querySelectorAll("td[data-slot]").forEach(t => {
       t.addEventListener("dragover", (e) => {
         if (!drag) return;
+        const ns = slotUnder(t, e) - drag.grab;
+        const res = checkMove(drag, ns);
+        lastTarget = res.ok ? ns : null;
         const h = $("#dndHint");
-        h.textContent = t.dataset.why || ""; h.className = "show " + (t.classList.contains("can") ? "ok" : "err");
+        const P = S.cfg.periods;
+        const where = `${S.cfg.days[Math.floor(ns / P)] || ""} คาบ ${ns % P + 1}${drag.len > 1 ? "-" + (ns % P + drag.len) : ""}`;
+        h.textContent = res.same ? "ตำแหน่งเดิม" : res.ok ? `✔ ย้ายไป ${where} ได้ ไม่ชนใคร` : `✖ ${where}: ${res.reasons.slice(0, 3).join(" · ")}`;
+        h.className = "show " + (res.ok ? "ok" : res.same ? "" : "err");
         h.style.left = (e.clientX + 14) + "px"; h.style.top = (e.clientY + 14) + "px";
-        if (t.classList.contains("can")) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+        if (res.ok) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
       });
-      t.addEventListener("drop", (e) => { e.preventDefault(); if (drag) applyMove(drag, +t.dataset.slot); });
+      t.addEventListener("drop", (e) => { e.preventDefault(); if (drag && lastTarget !== null) applyMove(drag, lastTarget); });
     });
   };
   function applyMove(d, newStart, silent) {
